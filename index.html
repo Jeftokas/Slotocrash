@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>NOVA BURST — Demo V1.0</title>
+<style>
+:root{
+  --bg:#050A1A;--blue:#00B4D8;--gold:#FFD166;--red:#EF233C;
+  --green:#06D6A0;--text:#E8F4F8;--dim:#8EACC0;--border:rgba(0,180,216,0.3);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;
+  height:100vh;overflow:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 60% 40% at 15% 50%,rgba(0,80,120,.15) 0%,transparent 70%),
+  radial-gradient(ellipse 50% 35% at 85% 20%,rgba(0,50,90,.12) 0%,transparent 60%);}
+#app{position:relative;z-index:1;height:100vh;overflow:hidden;}
+
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;transition:opacity .25s;}
+.screen.hidden{opacity:0;pointer-events:none;}
+#s-game,#s-modeA,#s-modeB{justify-content:flex-start;align-items:stretch;padding:0;}
+
+.hud{display:flex;align-items:center;justify-content:space-between;
+  padding:.55rem 1.1rem;background:rgba(4,8,20,.95);
+  border-bottom:1px solid var(--border);flex-shrink:0;}
+.hud-lbl{font-size:.6rem;color:var(--dim);letter-spacing:.08em;margin-bottom:1px;}
+.hud-val{font-size:.95rem;font-weight:700;color:var(--text);}
+.scat-pips{display:flex;gap:3px;margin-top:2px;}
+.scat-pip{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--red);transition:background .2s;}
+.scat-pip.lit{background:var(--red);}
+
+.grid-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:.4rem;}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;
+  width:min(97vw,432px);aspect-ratio:6/5;}
+.cell{display:flex;align-items:center;justify-content:center;border-radius:6px;
+  font-size:clamp(1.2rem,3.5vw,1.75rem);font-weight:600;transition:all .2s;
+  position:relative;border-width:1.5px;border-style:solid;}
+/* Special cells for W and S characters — larger, bolder */
+.cell.wild-cell{font-size:clamp(1.1rem,3.2vw,1.6rem);font-weight:900;}
+.cell.scat-cell{font-size:clamp(1.1rem,3.2vw,1.6rem);font-weight:900;}
+.cell.win{animation:winPulse .55s ease;}
+.cell.new{animation:fall .38s ease;}
+.cell.spinning{animation:spinCell .65s ease;}
+.cmult{position:absolute;top:2px;right:3px;font-size:.5rem;color:var(--gold);font-weight:800;}
+
+.controls{display:flex;align-items:center;justify-content:space-around;
+  padding:.55rem .8rem;background:rgba(4,8,20,.95);
+  border-top:1px solid var(--border);gap:.5rem;flex-shrink:0;}
+.bet-row{display:flex;align-items:center;gap:.35rem;}
+.bbet{background:none;border:1px solid var(--border);color:var(--dim);
+  width:26px;height:26px;border-radius:5px;cursor:pointer;font-size:.95rem;
+  display:flex;align-items:center;justify-content:center;}
+.bbet:hover{border-color:var(--blue);color:var(--blue);}
+.bet-disp{font-size:.88rem;color:var(--text);min-width:52px;text-align:center;font-weight:600;}
+
+.btn{border:none;border-radius:8px;cursor:pointer;font-weight:700;
+  letter-spacing:.07em;transition:all .15s;font-family:inherit;}
+.btn:active{transform:scale(.95);}
+.btn-spin{background:var(--blue);color:#030810;padding:.68rem 2.3rem;font-size:.95rem;}
+.btn-spin:hover{background:#22cbec;}
+.btn-spin:disabled{background:rgba(0,180,216,.25);color:rgba(3,8,16,.5);cursor:not-allowed;}
+.btn-green{background:var(--green);color:#021210;padding:.65rem 1.3rem;font-size:.88rem;}
+.btn-green:hover{background:#00f4b5;}
+.btn-red{background:var(--red);color:#fff;padding:.65rem 1.3rem;font-size:.88rem;}
+.btn-red:hover{background:#ff3355;}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--dim);
+  padding:.45rem .9rem;font-size:.78rem;border-radius:7px;cursor:pointer;transition:all .15s;}
+.btn-outline:hover{border-color:var(--blue);color:var(--text);}
+
+/* Pre-set NOVA RUSH preference (sekcija 4.3) */
+.btn-pref{background:rgba(8,15,30,.7);border:1px solid rgba(0,180,216,.3);
+  color:var(--text);padding:.35rem .75rem;border-radius:8px;font-size:.68rem;
+  letter-spacing:.04em;cursor:pointer;transition:all .15s;font-weight:600;}
+.btn-pref:hover{background:rgba(0,180,216,.18);border-color:rgba(0,180,216,.65);}
+.pref-ovl{position:fixed;inset:0;background:rgba(3,7,18,.85);z-index:9999;
+  display:flex;align-items:center;justify-content:center;padding:1rem;}
+.pref-card{background:linear-gradient(135deg,#0F1828,#1A2540);
+  border:1px solid rgba(0,180,216,.45);border-radius:14px;padding:1.2rem 1.1rem;
+  max-width:430px;width:100%;max-height:92vh;overflow-y:auto;
+  animation:promptIn .25s ease;}
+.pref-hd{font-size:.85rem;font-weight:800;color:var(--blue);
+  letter-spacing:.06em;margin-bottom:.2rem;}
+.pref-sub{font-size:.65rem;color:var(--dim);margin-bottom:.9rem;letter-spacing:.03em;}
+.pref-opt{background:rgba(8,15,30,.6);border:1px solid rgba(0,180,216,.15);
+  border-radius:9px;padding:.6rem .75rem;margin-bottom:.45rem;cursor:pointer;
+  transition:all .18s;}
+.pref-opt:hover{background:rgba(8,15,30,.85);border-color:rgba(0,180,216,.4);}
+.pref-opt.active{background:rgba(0,180,216,.16);border-color:rgba(0,180,216,.85);}
+.pref-opt-h{font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:.18rem;
+  display:flex;align-items:center;gap:.35rem;}
+.pref-opt-d{font-size:.65rem;color:var(--dim);line-height:1.4;}
+.pref-opt input{background:rgba(0,0,0,.55);border:1px solid rgba(0,180,216,.4);
+  color:var(--text);border-radius:4px;padding:.12rem .35rem;font-size:.7rem;
+  text-align:center;width:54px;margin:0 .15rem;font-family:inherit;}
+.pref-opt input:focus{outline:none;border-color:var(--blue);}
+.pref-btns{display:flex;gap:.5rem;margin-top:.9rem;}
+
+#s-prompt{gap:0;}
+.pbg{position:absolute;inset:0;background:rgba(3,7,18,.9);}
+.pcard{position:relative;z-index:1;background:rgba(8,18,36,.98);
+  border:1px solid rgba(0,180,216,.45);border-radius:14px;padding:1.8rem;
+  max-width:360px;width:90%;text-align:center;animation:promptIn .3s ease;}
+.ptitle{font-size:.7rem;letter-spacing:.18em;color:var(--blue);margin-bottom:.4rem;}
+.pamt{font-size:2.6rem;font-weight:900;color:var(--gold);}
+.pmult{font-size:.88rem;color:var(--dim);margin:.2rem 0 1.3rem;}
+.pbtns{display:flex;gap:.65rem;justify-content:center;}
+.tbarw{height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:1rem;overflow:hidden;}
+.tbar{height:100%;background:var(--blue);animation:timerShrink 8s linear forwards;}
+
+#s-nova{background:var(--bg);justify-content:flex-start;align-items:stretch;}
+.nova-hdr{display:flex;align-items:center;padding:.65rem 1.1rem;
+  border-bottom:1px solid var(--border);flex-shrink:0;gap:.8rem;}
+.nova-stake{font-size:.72rem;color:var(--dim);white-space:nowrap;}
+.nova-stake b{color:var(--red);}
+.dbar-w{flex:1;height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;}
+.dbar{height:100%;width:0%;background:var(--green);border-radius:3px;transition:width .1s,background .4s;}
+.nova-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;}
+.nova-lbl{font-size:.68rem;letter-spacing:.2em;color:var(--dim);}
+.nova-mult{font-size:clamp(3.8rem,11vw,6.5rem);font-weight:900;color:var(--gold);line-height:1;}
+.nova-val{font-size:1.2rem;margin:.2rem 0;}
+#nova-cv{width:min(88vw,480px);height:110px;border-radius:7px;
+  background:rgba(0,180,216,.04);border:1px solid var(--border);}
+.nova-ftr{padding:.75rem 1.1rem;display:flex;flex-direction:column;
+  align-items:center;gap:.5rem;flex-shrink:0;}
+.btn-cash{background:var(--green);color:#021210;padding:.9rem 0;font-size:1rem;
+  font-weight:900;letter-spacing:.08em;border-radius:9px;border:none;
+  cursor:pointer;width:min(88vw,300px);}
+.btn-cash:hover{background:#00f4b5;}
+.ac-row{display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:var(--dim);}
+.ac-row input{background:rgba(255,255,255,.06);border:1px solid var(--border);
+  color:var(--text);width:65px;padding:.28rem .45rem;border-radius:5px;font-size:.78rem;text-align:center;}
+
+.mode-cards{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;width:min(90vw,460px);}
+.mode-card{background:rgba(8,18,36,.88);border:1px solid var(--border);
+  border-radius:11px;padding:1.2rem;cursor:pointer;transition:all .18s;}
+.mode-card:hover{border-color:var(--blue);background:rgba(0,180,216,.07);}
+.mc-icon{font-size:1.8rem;margin-bottom:.5rem;}
+.mc-name{font-size:.83rem;font-weight:700;margin-bottom:.25rem;}
+.mc-desc{font-size:.7rem;color:var(--dim);line-height:1.5;}
+.mc-badge{display:inline-block;font-size:.62rem;padding:.18rem .5rem;
+  border-radius:4px;margin-top:.35rem;letter-spacing:.05em;
+  background:rgba(0,180,216,.15);color:var(--blue);}
+
+.ma-hud{display:flex;align-items:center;justify-content:space-between;
+  padding:.5rem 1rem;background:rgba(4,8,20,.95);
+  border-bottom:1px solid var(--border);flex-shrink:0;}
+.pool-val{font-size:1.4rem;font-weight:900;color:var(--blue);}
+.pool-lbl{font-size:.6rem;color:var(--dim);letter-spacing:.1em;}
+.qb-risk{font-size:.65rem;color:rgba(239,35,60,.7);}
+.ma-ftr{display:flex;align-items:center;justify-content:space-between;
+  padding:.5rem 1rem;background:rgba(4,8,20,.95);
+  border-top:1px solid var(--border);flex-shrink:0;}
+
+.mb-hud{display:flex;align-items:center;justify-content:space-between;
+  padding:.6rem 1.1rem;background:rgba(4,8,20,.95);
+  border-bottom:1px solid var(--border);flex-shrink:0;}
+.accum{font-size:1.35rem;font-weight:900;color:var(--green);}
+.lvl-bar{display:flex;gap:3px;padding:.45rem 1rem;flex-shrink:0;}
+.lvl-pip{flex:1;height:22px;border-radius:5px;display:flex;align-items:center;
+  justify-content:center;font-size:.6rem;font-weight:700;transition:all .25s;border:1px solid;}
+.lvl-pip.done{background:rgba(6,214,160,.18);border-color:var(--green);color:var(--green);}
+.lvl-pip.active{background:rgba(0,180,216,.22);border-color:var(--blue);color:var(--blue);}
+.lvl-pip.future{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1);color:var(--dim);}
+.mb-ftr{display:flex;flex-direction:column;align-items:center;
+  padding:.6rem 1rem;background:rgba(4,8,20,.95);
+  border-top:1px solid var(--border);gap:.45rem;flex-shrink:0;}
+.ca-row{display:flex;gap:.6rem;width:100%;max-width:350px;}
+.btn-coll{flex:1;padding:.65rem;font-size:.82rem;border-radius:7px;
+  border:1px solid var(--border);background:none;color:var(--text);
+  cursor:pointer;transition:all .15s;font-family:inherit;}
+.btn-coll:hover{border-color:var(--green);color:var(--green);}
+.btn-asc{flex:2;padding:.65rem;font-size:.88rem;font-weight:700;border-radius:7px;
+  border:none;background:var(--blue);color:#030810;cursor:pointer;
+  transition:all .15s;font-family:inherit;}
+.btn-asc:hover{background:#22cbec;}
+
+.logo-nova{font-size:clamp(2.8rem,8vw,5.5rem);font-weight:900;letter-spacing:.3em;line-height:1;}
+.logo-burst{font-size:clamp(1.8rem,5.5vw,4rem);font-weight:900;letter-spacing:.5em;color:var(--blue);margin-top:-.25em;}
+.istat-val{font-size:1.9rem;font-weight:700;color:var(--gold);}
+.istat-lbl{font-size:.68rem;color:var(--dim);letter-spacing:.1em;}
+
+#dp{position:fixed;bottom:75px;right:.75rem;z-index:99;display:none;}
+#dp.expanded{display:block;animation:fadeIn .2s ease;}
+.dp-toggle{width:42px;height:42px;border-radius:50%;flex-shrink:0;
+  background:rgba(4,8,20,.97);border:1.5px solid rgba(0,180,216,.5);
+  color:var(--blue);font-size:1.25rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(0,0,0,.4);transition:all .18s;
+  font-family:inherit;font-weight:600;}
+.dp-toggle:hover{background:rgba(0,180,216,.2);border-color:var(--blue);}
+.dp-toggle:active{transform:scale(.94);}
+.dp-toggle.is-active{background:rgba(0,180,216,.28);border-color:var(--blue);
+  transform:rotate(60deg);}
+.dp-body{background:rgba(4,8,20,.97);border:1px solid rgba(0,180,216,.4);
+  border-radius:10px;padding:.55rem;display:flex;
+  flex-direction:column;gap:.3rem;min-width:165px;
+  box-shadow:0 8px 24px rgba(0,0,0,.55);}
+.dp-t{font-size:.58rem;letter-spacing:.14em;color:var(--blue);text-align:center;margin-bottom:.15rem;}
+.dp-btn{background:rgba(0,180,216,.07);border:1px solid rgba(0,180,216,.22);color:var(--dim);
+  font-size:.65rem;padding:.4rem .55rem;border-radius:5px;cursor:pointer;
+  text-align:left;transition:all .13s;font-family:inherit;}
+.dp-btn:hover{border-color:var(--blue);color:var(--text);}
+.dp-btn:active{transform:scale(.96);}
+
+@keyframes spinCell{0%{transform:scaleY(.15);opacity:.2}65%{transform:scaleY(1.04)}100%{transform:scaleY(1);opacity:1}}
+@keyframes winPulse{0%,100%{transform:scale(1)}35%{transform:scale(1.13)}70%{transform:scale(1.05)}}
+@keyframes fall{from{transform:translateY(-110%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes promptIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes timerShrink{from{width:100%}to{width:0%}}
+@keyframes burstFlash{0%{background:rgba(239,35,60,.4)}60%{background:transparent}100%{background:transparent}}
+@keyframes poolBurst{0%{transform:scale(1)}40%{transform:scale(1.3);color:#EF233C}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-9px)}75%{transform:translateX(9px)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── PIN ACCESS SCREEN ─────────────────────────────────────────── */
+#s-pin{background:radial-gradient(ellipse at center,rgba(0,180,216,.08) 0%,var(--bg) 70%);
+  justify-content:center;align-items:center;padding:1rem;}
+.pin-card{background:rgba(8,18,36,.95);border:1px solid rgba(0,180,216,.4);
+  border-radius:16px;padding:2.2rem 1.6rem;max-width:380px;width:100%;
+  text-align:center;animation:fadeIn .35s ease;
+  box-shadow:0 12px 50px rgba(0,180,216,.18);}
+.pin-logo{font-size:clamp(1.9rem,7vw,2.6rem);font-weight:900;letter-spacing:.32em;
+  color:var(--gold);line-height:1.1;margin-bottom:.25rem;}
+.pin-logo span{color:var(--blue);letter-spacing:.42em;display:block;
+  font-size:.78em;margin-top:.1em;}
+.pin-tag{font-size:.62rem;letter-spacing:.28em;color:var(--red);
+  margin:.85rem 0 1.6rem;font-weight:700;}
+.pin-msg{font-size:.82rem;color:var(--dim);margin-bottom:1.2rem;line-height:1.4;}
+.pin-input{width:100%;max-width:240px;padding:.95rem .5rem;
+  font-size:1.7rem;font-weight:700;letter-spacing:.6em;text-align:center;
+  background:rgba(0,0,0,.5);border:2px solid var(--border);
+  color:var(--text);border-radius:10px;font-family:inherit;
+  margin-bottom:1rem;text-indent:.3em;}
+.pin-input:focus{outline:none;border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(0,180,216,.15);}
+.pin-input::placeholder{color:rgba(142,172,192,.35);letter-spacing:.4em;}
+.pin-input::-webkit-outer-spin-button,
+.pin-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.pin-btn{width:100%;max-width:240px;font-size:.85rem;padding:.75rem 1rem;}
+.pin-btn:disabled{opacity:.4;cursor:not-allowed;}
+.pin-err{font-size:.74rem;color:var(--red);margin-top:.85rem;min-height:1.1rem;
+  font-weight:600;letter-spacing:.02em;}
+.pin-foot{font-size:.58rem;color:var(--dim);margin-top:1.5rem;
+  letter-spacing:.06em;opacity:.6;}
+.shake{animation:shake .38s ease;}
+
+/* ─── MOBILE RESPONSIVE ─────────────────────────────────────────── */
+@media (max-width: 600px) {
+  /* Demo control panel je sada gear-button u game controls */
+
+  /* HUD spušten i veći — safe-area podrška za iPhone notch + bolja vidljivost */
+  .hud {
+    padding: .8rem .9rem;
+    padding-top: max(.95rem, calc(env(safe-area-inset-top, 0px) + .35rem));
+  }
+  .hud-val { font-size: 1rem; }
+  .hud-lbl { font-size: .62rem; }
+  .scat-pip { width: 10px; height: 10px; }
+
+  /* Bottom safe-area za controls (home indicator na iPhone X+) */
+  .controls, .ma-ftr, .mb-ftr {
+    padding-bottom: max(.55rem, calc(env(safe-area-inset-bottom, 0px) + .15rem));
+  }
+
+  /* Game controls kompaktniji */
+  .controls { padding-left: .5rem; padding-right: .5rem; gap: .35rem; }
+  .btn-spin { padding: .55rem 1.1rem; font-size: .8rem; }
+  .bet-disp { min-width: 42px; font-size: .78rem; }
+  .bbet { width: 26px; height: 26px; font-size: .82rem; }
+
+  /* Gear button manji na mobile da stane u controls red */
+  .dp-toggle { width: 36px; height: 36px; font-size: 1.05rem; }
+
+  /* Mode select cards */
+  .mode-card { padding: .9rem .65rem; }
+  .mc-icon { font-size: 1.5rem; }
+  .mc-name { font-size: .76rem; }
+  .mc-desc { font-size: .62rem; line-height: 1.4; }
+
+  /* Mode A/B HUDs */
+  .ma-hud, .mb-hud { padding: .4rem .65rem; }
+  .pool-val, .accum { font-size: 1.15rem; }
+  .ma-ftr, .mb-ftr { padding: .5rem .65rem; }
+
+  /* Pref button — smaller on mobile */
+  .btn-pref { padding: .3rem .55rem; font-size: .62rem; }
+
+  /* Pref modal — full-width with safe padding */
+  .pref-ovl { padding: .65rem; }
+  .pref-card { padding: 1.1rem .9rem; }
+  .pref-opt { padding: .55rem .65rem; }
+  .pref-opt-h { font-size: .72rem; }
+  .pref-opt-d { font-size: .62rem; }
+
+  /* Nova Rush */
+  .nova-hdr { padding: .5rem .75rem; gap: .55rem; }
+  .nova-stake { font-size: .65rem; }
+  .nova-mult { font-size: clamp(3rem, 14vw, 5rem); }
+  .nova-val { font-size: 1.05rem; }
+  .nova-ftr { padding: .65rem .75rem; }
+
+  /* Win prompt */
+  .pcard { padding: 1.5rem 1.1rem; max-width: 320px; }
+  .pamt { font-size: 2.1rem; }
+  .pmult { font-size: .8rem; }
+  .pbtns { flex-direction: column; gap: .55rem; }
+  .pbtns .btn { width: 100%; }
+
+  /* Logo sizing intro screen */
+  .logo-nova { font-size: clamp(2.3rem, 9vw, 3.8rem); }
+  .logo-burst { font-size: clamp(1.5rem, 6.5vw, 2.6rem); }
+  .istat-val { font-size: 1.55rem; }
+  .istat-lbl { font-size: .62rem; }
+
+  /* PIN screen mobile tweaks */
+  .pin-card { padding: 1.8rem 1.2rem; }
+  .pin-msg { font-size: .76rem; }
+}
+
+/* Touch optimizations — prevents double-tap zoom delay */
+button, .btn, .btn-pref, .btn-outline, .btn-coll, .btn-asc, .btn-cash,
+.bbet, .mode-card, .pref-opt, .dp-btn { touch-action: manipulation; }
+
+/* Disable text selection on UI (keeps player from accidentally selecting) */
+.hud, .controls, .mb-hud, .ma-hud, .ma-ftr, .mb-ftr, .nova-hdr, .nova-ftr,
+.mode-card, .pref-card, .pin-card, button, .btn { user-select: none; -webkit-user-select: none; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="screen" id="s-pin">
+    <div class="pin-card">
+      <div class="pin-logo">NOVA <span>BURST</span></div>
+      <div class="pin-tag">CONFIDENTIAL DEMO · V1.0</div>
+      <div class="pin-msg">Unesite 4-cifreni PIN za pristup demo verziji</div>
+      <input type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4"
+             id="pin-input" class="pin-input" autocomplete="off"
+             onkeyup="if(event.key==='Enter')checkPin();"
+             oninput="this.value=this.value.replace(/[^0-9]/g,'');if(this.value.length===4)setTimeout(checkPin,120);"
+             placeholder="••••"/>
+      <button class="btn btn-spin pin-btn" onclick="checkPin()">PRISTUPI ›</button>
+      <div class="pin-err" id="pin-err">&nbsp;</div>
+      <div class="pin-foot">© 2026 NOVA BURST · Neovlašćeni pristup je zabranjen</div>
+    </div>
+  </div>
+  <div class="screen hidden" id="s-intro"></div>
+  <div class="screen hidden" id="s-game"></div>
+  <div class="screen hidden" id="s-prompt"></div>
+  <div class="screen hidden" id="s-nova"></div>
+  <div class="screen hidden" id="s-modesel"></div>
+  <div class="screen hidden" id="s-modeA"></div>
+  <div class="screen hidden" id="s-modeB"></div>
+  <div class="screen hidden" id="s-result"></div>
+</div>
+<div id="dp">
+  <div class="dp-body">
+    <div class="dp-t">DEMO CONTROLS</div>
+    <button class="dp-btn" onclick="G.forceWin=true;doSpin()">▶ Force Win&gt;Stake</button>
+    <button class="dp-btn" onclick="G.forceScatter=true;doSpin()">▶ Force 3 Scatters</button>
+    <button class="dp-btn" onclick="G.forceBig=true;doSpin()">▶ Force Big Win</button>
+    <button class="dp-btn" onclick="G.scatCnt=3;showModeSelect();setTimeout(startModeA,120)">▶ Demo Mode A</button>
+    <button class="dp-btn" onclick="G.scatCnt=3;showModeSelect();setTimeout(startModeB,120)">▶ Demo Mode B</button>
+    <button class="dp-btn" onclick="resetDemo()">↺ Reset Demo</button>
+  </div>
+</div>
+<script>
+// ─── SYMBOL DEFINITIONS ───────────────────────────────────────────────────────
+// W = letter "W" (Wild), B = letter "S" (Scatter) — visually distinct from pay symbols
+// Paytables tuned via 1M-spin simulation: RTP 96.4%, Hit 31%, Win>Stake 13.4%
+const SYM={
+  Q:{ch:'◈',clr:'#00EEFF',bg:'rgba(0,130,190,.55)',bdr:'rgba(0,238,255,.85)',  pay:[0.90,2.96,7.20,16.40,36,72,144,288,624]},
+  N:{ch:'◆',clr:'#EE55FF',bg:'rgba(120,15,160,.55)',bdr:'rgba(238,85,255,.85)',pay:[0.45,1.64,3.92,9.20,19.60,39.20,78.40,164,348]},
+  S:{ch:'★',clr:'#FFD700',bg:'rgba(140,90,0,.55)',  bdr:'rgba(255,215,0,.85)', pay:[0.27,1.04,2.64,6.24,13.60,28,57.60,121.60,262.40]},
+  I:{ch:'◉',clr:'#55DDFF',bg:'rgba(0,70,140,.55)', bdr:'rgba(85,221,255,.85)',pay:[0.16,0.62,1.64,3.92,8.80,18.40,38,80,173.60]},
+  A:{ch:'⬡',clr:'#BBDDEE',bg:'rgba(40,70,90,.5)',  bdr:'rgba(187,221,238,.75)',pay:[0.09,0.36,0.98,2.36,5.36,11.20,23.60,49.60,108]},
+  T:{ch:'⊕',clr:'#55FFBB',bg:'rgba(0,90,65,.5)',   bdr:'rgba(85,255,187,.75)',pay:[0.06,0.25,0.66,1.58,3.60,7.52,15.76,33.60,72]},
+  C:{ch:'✦',clr:'#CCEEFF',bg:'rgba(5,30,80,.5)',   bdr:'rgba(204,238,255,.7)', pay:[0.04,0.18,0.49,1.22,2.76,5.76,12.16,25.60,56]},
+  D:{ch:'▪',clr:'#7799BB',bg:'rgba(15,35,55,.5)',  bdr:'rgba(119,153,187,.65)',pay:[0.04,0.12,0.31,0.78,1.77,3.68,7.76,16.40,35.20]},
+  // FIX: Wild = bold "W" letter, Scatter = bold "S" letter — clearly distinct
+  W:{ch:'W', clr:'#FFDD00',bg:'rgba(150,110,0,.65)',bdr:'rgba(255,221,0,.95)', special:true},
+  B:{ch:'S', clr:'#FF2244',bg:'rgba(150,10,25,.65)',bdr:'rgba(255,34,68,.95)', special:true}
+};
+
+// FIX: Realistic 8-type pool — ~31% hit rate, no dominant type
+// Pool: T=9,A=8,C=7,D=7,I=5,S=4,N=3,W=3,Q=2,B=1 = 49 total
+// W=3 ensures wilds appear ~1.8x per spin on average → visible each session
+const POOL='QQNNNSSSSIIIIIAAAAAAAATTTTTTTTTCCCCCCCDDDDDDDWWWB'.split('');
+
+// FIX: Mode B — higher bust risk + lower multipliers for realistic balance
+// L2=20%, L3=35%, L4=50% → P(reaching L5) = 26% (was 33.7%)
+// Multipliers reduced: 1/2/3/5/8 (was 1/2/4/8/15) — caps Mode B max payout
+const BLEVELS=[null,
+  {name:'Low Orbit',  mult:1, risk:0 },
+  {name:'Mid Orbit',  mult:2, risk:20},
+  {name:'High Orbit', mult:3, risk:35},
+  {name:'Deep Space', mult:5, risk:50},
+  {name:'Nova Threshold',mult:8,risk:50}  // FIX: was 0 — now 50% (10% per spin) since per-spin bust is the new model
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+const G={
+  balance:1000,bet:1,spinWin:0,scatCnt:0,
+  grid:new Array(30).fill('D'),
+  novaStake:0,novaBust:0,novaMult:1.0,novaHist:[],novaTimer:null,
+  mA:{spins:0,pool:1,wins:0},
+  mB:{level:1,accum:0},
+  spinning:false,
+  forceWin:false,forceScatter:false,forceBig:false,
+  autoCashout:0,
+  // Pre-set NOVA RUSH preferencije igrača (sekcija 4.3 izveštaja)
+  pref:{
+    mode:'ASK',          // COLLECT | ASK | LAUNCH | CUSTOM | AUTO
+    customMin:2.0,       // Donja granica CUSTOM opsega (× uloga)
+    customMax:10.0,      // Gornja granica CUSTOM opsega (× uloga)
+    autoCashoutMult:2.0  // Auto-cashout multiplier u AUTO modu
+  }
+};
+
+// ─── UTILITIES ────────────────────────────────────────────────────────────────
+const $=id=>document.getElementById(id);
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+const fmt=n=>'€'+parseFloat(n).toFixed(2);
+const fmtX=n=>n.toFixed(2)+'×';
+function rnd(){return POOL[Math.floor(Math.random()*POOL.length)];}
+
+// Active screen tracking — prevents duplicate-ID querySelector bug
+let CUR='s-intro';
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  $(id).classList.remove('hidden');
+  CUR=id;
+  // Auto-close demo panel pri promeni ekrana (ako je bio otvoren)
+  const dp=$('dp');if(dp&&dp.classList.contains('expanded')){
+    dp.classList.remove('expanded');
+    const tgl=$('dp-toggle-btn');if(tgl)tgl.classList.remove('is-active');
+  }
+}
+function gridEl(){return $(CUR)?$(CUR).querySelector('.grid'):null;}
+
+// ─── CLUSTER DETECTION (BFS) ──────────────────────────────────────────────────
+function findClusters(grid){
+  const vis=new Array(30).fill(false),res=[];
+  for(let i=0;i<30;i++){
+    if(vis[i])continue;
+    const s=grid[i];
+    if(!s||s==='B'||s==='W'){vis[i]=true;continue;}
+    const q=[i];vis[i]=true;const grp=[];
+    while(q.length){
+      const c=q.shift();grp.push(c);
+      const r=Math.floor(c/6),col=c%6;
+      const nb=[r>0?(r-1)*6+col:-1,r<4?(r+1)*6+col:-1,col>0?r*6+col-1:-1,col<5?r*6+col+1:-1];
+      for(const n of nb){
+        if(n<0||vis[n])continue;
+        if(grid[n]===s||grid[n]==='W'){vis[n]=true;q.push(n);}
+      }
+    }
+    if(grp.length>=4)res.push({sym:s,cells:grp});
+  }
+  return res;
+}
+function getPay(sym,sz){
+  const p=SYM[sym]?.pay;if(!p)return 0;
+  return(p[Math.min(sz-4,8)]||0)*G.bet;
+}
+
+// ─── GRID GENERATION ─────────────────────────────────────────────────────────
+// FIX: Pure random grid — no guaranteed clusters. Initial display uses cleanGrid().
+function genGrid(){
+  return Array.from({length:30},()=>rnd());
+}
+// FIX: Force modes for demo controls only
+function genGridForced(mode){
+  const g=genGrid();
+  if(mode==='scatter'){
+    [2,14,27].forEach(i=>g[i]='B');
+  } else if(mode==='win'){
+    // Manually seed a modest 6-cell cluster — realistic win
+    [0,1,6,7,12,13].forEach(i=>g[i]='T');
+  } else if(mode==='big'){
+    // Larger cluster across premium symbols
+    [0,1,2,6,7,8,12].forEach(i=>g[i]='Q');
+    [3,4,9,10,15,16].forEach(i=>g[i]='N');
+  }
+  return g;
+}
+// FIX: Clean grid for display — regenerate until no winning clusters
+// Prevents phantom cluster bug after returning from bonus/NOVA RUSH
+function genCleanGrid(){
+  for(let tries=0;tries<25;tries++){
+    const g=genGrid();
+    if(findClusters(g).length===0)return g;
+  }
+  return genGrid(); // fallback — very rare
+}
+
+// ─── GRID RENDER ─────────────────────────────────────────────────────────────
+function renderGrid(el,grid,winCells,newCells,cascMult){
+  if(!el)return;
+  el.innerHTML='';
+  grid.forEach((s,i)=>{
+    const sym=s?SYM[s]:null;
+    if(!sym){
+      el.innerHTML+='<div class="cell" style="background:rgba(8,15,30,.7);border-color:rgba(0,180,216,.12);"></div>';
+      return;
+    }
+    const isWin=!!(winCells&&winCells.includes(i));
+    const isNew=!!(newCells&&newCells.includes(i));
+    const extra=s==='B'?'scat-cell':s==='W'?'wild-cell':'';
+    const cls=['cell',isWin?'win':'',isNew?'new':'',extra].filter(Boolean).join(' ');
+    const bdr=isWin?'rgba(255,209,102,.95)':sym.bdr;
+    const bg=isWin?sym.bg.replace(/[\d.]+\)$/,'0.78)'):sym.bg;
+    el.innerHTML+=`<div class="${cls}" style="background:${bg};border-color:${bdr};color:${sym.clr};">${
+      cascMult>1&&isWin?`<span class="cmult">×${cascMult}</span>`:''
+    }${sym.ch}</div>`;
+  });
+}
+
+// ─── CASCADE ENGINE ───────────────────────────────────────────────────────────
+async function runCascades(levelMult){
+  const lm=levelMult||1;
+  let depth=0,totalWin=0;
+  while(true){
+    const clusters=findClusters(G.grid);
+    if(!clusters.length)break;
+    const winCells=clusters.flatMap(c=>c.cells);
+    // FIX: Cap cascade depth multiplier at 3x. Without cap, deep cascades with
+    // the new 4+ threshold compound too aggressively. Cap 3 keeps cascades
+    // meaningful but prevents extreme amplification.
+    const cascMult=Math.min(3,depth===0?1:1+depth)*lm;
+    renderGrid(gridEl(),G.grid,winCells,null,cascMult);
+    let lw=0;clusters.forEach(c=>lw+=getPay(c.sym,c.cells.length));
+    totalWin+=lw*cascMult;
+    await delay(700);
+    winCells.forEach(i=>{if(G.grid[i]!=='B')G.grid[i]=null;});
+    G.scatCnt=G.grid.filter(s=>s==='B').length;
+    const newCells=[];
+    for(let col=0;col<6;col++){
+      let wr=4;
+      for(let row=4;row>=0;row--){
+        const ci=row*6+col;
+        if(G.grid[ci]!==null){
+          const dest=wr*6+col;
+          G.grid[dest]=G.grid[ci];
+          if(dest!==ci)G.grid[ci]=null;
+          wr--;
+        }
+      }
+      for(let row=wr;row>=0;row--){G.grid[row*6+col]=rnd();newCells.push(row*6+col);}
+    }
+    depth++;
+    renderGrid(gridEl(),G.grid,null,newCells,null);
+    await delay(430);
+  }
+  G.cascDepth=depth;
+  return totalWin;
+}
+
+// ─── SPIN ─────────────────────────────────────────────────────────────────────
+function doSpin(){const b=$('nb-spin');if(b)b.click();}
+
+async function spin(){
+  if(G.spinning||G.balance<G.bet)return;
+  G.spinning=true;
+  const sBtn=$('nb-spin');if(sBtn)sBtn.disabled=true;
+  G.balance-=G.bet;updHUD();updWin(0);G.scatCnt=0;
+  let fm=null;
+  if(G.forceWin){fm='win';G.forceWin=false;}
+  else if(G.forceScatter){fm='scatter';G.forceScatter=false;}
+  else if(G.forceBig){fm='big';G.forceBig=false;}
+  G.grid=fm?genGridForced(fm):genGrid();
+  const ge=gridEl();
+  // FIX: Render NEW grid BEFORE animation. spinCell starts at scaleY:.15/opacity:.2
+  // (nearly invisible), so the animation now reveals NEW symbols instead of
+  // showing OLD symbols then swapping. No more "two arrangements" flash.
+  renderGrid(ge,G.grid,null,null,null);
+  if(ge){ge.querySelectorAll('.cell').forEach(c=>{c.style.animation='none';void c.offsetWidth;c.style.animation='spinCell .65s ease';});}
+  await delay(680);
+  G.scatCnt=G.grid.filter(s=>s==='B').length;
+  updScatPips();
+  await delay(200);
+  const totalWin=await runCascades(1);
+  G.spinWin=totalWin;
+  G.scatCnt=G.grid.filter(s=>s==='B').length;
+  updScatPips();
+  if(G.scatCnt>=3){G.spinning=false;await delay(400);showModeSelect();return;}
+  // FIX: Pre-set preferencije (sekcija 4.3 izveštaja) — routing po G.pref.mode
+  if(totalWin>G.bet){
+    updWin(totalWin);
+    await delay(250);
+    const pm=G.pref.mode;
+    if(pm==='COLLECT'){
+      // Uvek naplati — bez prompta
+      G.balance+=totalWin;updHUD();
+      await delay(700);updWin(0);
+      G.spinning=false;if(sBtn)sBtn.disabled=false;return;
+    }
+    if(pm==='LAUNCH'){
+      // Uvek lansiraj — bez auto-cashout
+      startNova(totalWin,0);
+      G.spinning=false;return;
+    }
+    if(pm==='AUTO'){
+      // Uvek lansiraj + auto-cashout na pre-set multiplikatoru
+      startNova(totalWin,G.pref.autoCashoutMult);
+      G.spinning=false;return;
+    }
+    if(pm==='CUSTOM'){
+      // Lansiraj samo ako je dobitak u opsegu min×..max×
+      const winMult=totalWin/G.bet;
+      if(winMult>=G.pref.customMin&&winMult<=G.pref.customMax){
+        startNova(totalWin,0);
+        G.spinning=false;return;
+      }
+      // Izvan opsega → naplati
+      G.balance+=totalWin;updHUD();
+      await delay(700);updWin(0);
+      G.spinning=false;if(sBtn)sBtn.disabled=false;return;
+    }
+    // ASK (default) — pokaži prompt sa 8s tajmerom
+    showPrompt(totalWin);G.spinning=false;return;
+  }
+  if(totalWin>0){G.balance+=totalWin;updHUD();updWin(totalWin);await delay(500);updWin(0);}
+  G.spinning=false;
+  if(sBtn)sBtn.disabled=false;
+}
+
+function updHUD(){const b=$('hud-bal');if(b)b.textContent=fmt(G.balance);}
+function updWin(w){const el=$('hud-win');if(el)el.textContent=w>0?fmt(w):'';}
+function updScatPips(){for(let i=0;i<3;i++){const p=$('sp'+i);if(p)p.classList.toggle('lit',i<G.scatCnt);}}
+
+// ─── WIN PROMPT ───────────────────────────────────────────────────────────────
+function showPrompt(amount){
+  const mult=(amount/G.bet).toFixed(1);
+  $('s-prompt').innerHTML=`
+    <div class="pbg"></div>
+    <div class="pcard">
+      <div class="ptitle">WIN DETECTED — NOVA RUSH?</div>
+      <div class="pamt">${fmt(amount)}</div>
+      <div class="pmult">${mult}× tvoj ulog</div>
+      <div class="pbtns">
+        <button class="btn btn-green" onclick="collectWin(${amount})">NAPLATI ${fmt(amount)}</button>
+        <button class="btn btn-red" onclick="launchNova(${amount})">NOVA RUSH ›</button>
+      </div>
+      <div style="font-size:.68rem;color:var(--dim);margin-top:.7rem;">Auto-naplata za <span id="pt-cnt">8</span>s</div>
+      <div class="tbarw"><div class="tbar"></div></div>
+    </div>`;
+  show('s-prompt');
+  let t=8;
+  const ti=setInterval(()=>{t--;const el=$('pt-cnt');if(el)el.textContent=t;if(t<=0){clearInterval(ti);collectWin(amount);}},1000);
+  G._ptimer=ti;
+}
+function collectWin(amt){
+  clearInterval(G._ptimer);G.balance+=amt;updHUD();
+  showGame(true); // FIX: preserve post-cascade grid — no reshuffle after collect
+  setTimeout(()=>{G.spinning=false;const b=$('nb-spin');if(b)b.disabled=false;},100);
+}
+function launchNova(amt){clearInterval(G._ptimer);startNova(amt);}
+
+// ─── NOVA RUSH ────────────────────────────────────────────────────────────────
+function startNova(stake,autoCashoutMult){
+  G.novaStake=stake;G.novaMult=1.0;G.novaHist=[1.0];
+  G.autoCashout=autoCashoutMult||0; // FIX: AUTO mode pre-set, default 0 (manual)
+  const r=Math.random();
+  G.novaBust=Math.min(Math.max(0.97/r,1.01),180);
+  show('s-nova');buildNovaScreen();
+  G.novaTimer=setInterval(tickNova,85);
+}
+function buildNovaScreen(extraHdr){
+  $('s-nova').innerHTML=`
+    <div class="nova-hdr">
+      <div class="nova-stake">AT RISK: <b>${fmt(G.novaStake)}</b></div>
+      <div class="dbar-w"><div class="dbar" id="dbar"></div></div>
+      ${extraHdr||'<div style="font-size:.68rem;color:var(--dim);">NOVA RUSH</div>'}
+    </div>
+    <div class="nova-body">
+      <div class="nova-lbl">MULTIPLIER</div>
+      <div class="nova-mult" id="nmult">1.00×</div>
+      <div class="nova-val" id="nval">${fmt(G.novaStake)}</div>
+      <canvas id="nova-cv" width="480" height="110"></canvas>
+    </div>
+    <div class="nova-ftr">
+      <button class="btn-cash" id="ncash" onclick="cashout()">CASHOUT  ${fmt(G.novaStake)}</button>
+      <div class="ac-row">
+        <span>Auto-cashout:</span>
+        <input type="number" placeholder="pr. 3.00" min="1.01" step=".5"
+          value="${G.autoCashout>1?G.autoCashout.toFixed(2):''}"
+          oninput="G.autoCashout=parseFloat(this.value)||0"/>×
+      </div>
+    </div>`;
+}
+function tickNova(){
+  G.novaMult=Math.round((G.novaMult+G.novaMult*.007+0.013)*100)/100;
+  G.novaHist.push(G.novaMult);
+  if(G.novaHist.length>140)G.novaHist.shift();
+  const val=G.novaStake*G.novaMult;
+  const danger=Math.min((G.novaMult-1)/12,1);
+  const hue=120-danger*120;
+  const col=`hsl(${hue},80%,60%)`;
+  const me=$('nmult'),ve=$('nval'),ce=$('ncash'),db=$('dbar');
+  if(me){me.textContent=fmtX(G.novaMult);me.style.color=col;}
+  if(ve)ve.textContent=fmt(val);
+  if(ce)ce.textContent='CASHOUT  '+fmt(val);
+  if(db){db.style.width=(danger*100)+'%';db.style.background=`hsl(${hue},70%,50%)`;}
+  drawNovaGraph(col);
+  if(G.autoCashout>1&&G.novaMult>=G.autoCashout){clearInterval(G.novaTimer);cashout();return;}
+  if(G.novaMult>=G.novaBust){clearInterval(G.novaTimer);triggerBurst();}
+}
+function drawNovaGraph(col){
+  const cv=$('nova-cv');if(!cv)return;
+  const ctx=cv.getContext('2d');const w=cv.width,h=cv.height;
+  ctx.clearRect(0,0,w,h);
+  const pts=G.novaHist;if(pts.length<2)return;
+  const maxM=Math.max(...pts,4);
+  ctx.beginPath();
+  pts.forEach((m,i)=>{const x=(i/(pts.length-1))*w,y=h-(m/maxM)*h*.87-4;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();
+  const g2=ctx.createLinearGradient(0,0,0,h);
+  g2.addColorStop(0,col.replace('60%)','25%)'));g2.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.fillStyle=g2;ctx.fill();
+  ctx.beginPath();ctx.arc(w-2,(h-(G.novaMult/maxM)*h*.87-4),4,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+}
+function cashout(){
+  if(!G.novaTimer)return;
+  clearInterval(G.novaTimer);G.novaTimer=null;
+  const win=G.novaStake*G.novaMult;G.balance+=win;updHUD();
+  showResult(win,true,G.novaMult,'NOVA RUSH');
+}
+function triggerBurst(){
+  G.novaTimer=null;
+  const ns=$('s-nova');if(ns)ns.style.animation='burstFlash .6s ease';
+  setTimeout(()=>showResult(0,false,G.novaBust,'NOVA RUSH'),650);
+}
+
+// ─── MODE SELECT ──────────────────────────────────────────────────────────────
+function showModeSelect(){
+  show('s-modesel');
+  $('s-modesel').innerHTML=`
+    <div style="font-size:.7rem;letter-spacing:.18em;color:var(--blue);margin-bottom:.4rem;">BONUS — ${G.scatCnt} SCATTERS</div>
+    <div style="font-size:.83rem;color:var(--dim);margin-bottom:.8rem;">IZABERI MISIJU</div>
+    <div class="mode-cards">
+      <div class="mode-card" onclick="startModeA()">
+        <div class="mc-icon" style="color:var(--blue);">🌀</div>
+        <div class="mc-name">QUANTUM CASCADE</div>
+        <div class="mc-desc">Free spins sa Crash Pool-om. Pool raste sa dobitcima. Quantum Burst (8%) resetuje Pool na 1×.</div>
+        <div class="mc-badge">BONUS MODE A</div>
+        <div style="margin-top:.4rem;font-size:.68rem;color:var(--dim);">RTP 96.5–97.5% | Max ~400×</div>
+      </div>
+      <div class="mode-card" onclick="startModeB()">
+        <div class="mc-icon" style="color:var(--gold);">🚀</div>
+        <div class="mc-name">ASCEND PROTOCOL</div>
+        <div class="mc-desc">5 nivoa. Naplati ili napreduj. Rizik rušenja raste svakim nivoom. L5 = NOVA RUSH Finale.</div>
+        <div class="mc-badge" style="background:rgba(255,209,102,.15);color:var(--gold);">BONUS MODE B</div>
+        <div style="margin-top:.4rem;font-size:.68rem;color:var(--dim);">RTP 95–98% | Max 2,000×</div>
+      </div>
+    </div>`;
+}
+
+// ─── MODE A: QUANTUM CASCADE (TIME-BASED) ────────────────────────────────────
+// FIX: Time-based instead of spin-count. Manual spin button. Sticky wilds persist
+// across spins until Quantum Burst clears them. Pool grows visibly (decimal).
+function startModeA(){
+  G.mA={
+    timeLeft:45,        // FIX: was 60s — reduced to balance excessive payouts
+    pool:1.0,           // crash pool multiplier (decimal)
+    wins:0,             // accumulated wins
+    stickyWilds:[],     // positions where wilds persist
+    spinning:false,
+    timerInterval:null,
+    ended:false
+  };
+  show('s-modeA');
+  buildModeAUI();
+  startModeATimer();
+}
+
+function buildModeAUI(){
+  $('s-modeA').innerHTML=`
+    <div class="ma-hud">
+      <div><div class="pool-lbl">CRASH POOL</div>
+        <div class="pool-val" id="ma-pool">${G.mA.pool.toFixed(1)}×</div></div>
+      <div style="flex:1;margin:0 .6rem;text-align:center;">
+        <div style="font-size:.6rem;color:var(--dim);letter-spacing:.1em;">TIME REMAINING</div>
+        <div id="ma-time" style="font-size:1.1rem;font-weight:800;color:var(--gold);">${G.mA.timeLeft.toFixed(1)}s</div>
+        <div style="margin-top:.25rem;background:rgba(255,255,255,.08);height:5px;border-radius:3px;overflow:hidden;">
+          <div id="ma-time-bar" style="height:100%;background:linear-gradient(90deg,#16D996,#FFD166);width:${(G.mA.timeLeft/45*100).toFixed(1)}%;transition:width .1s linear;"></div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:.6rem;color:var(--dim);">WINS</div>
+        <div style="font-size:.92rem;font-weight:700;color:var(--green);" id="ma-wins">${fmt(G.mA.wins)}</div>
+      </div>
+    </div>
+    <div class="grid-wrap"><div class="grid"></div></div>
+    <div class="ma-ftr">
+      <div style="font-size:.7rem;color:var(--dim);text-align:center;margin-bottom:.4rem;">
+        Pool × Wins = <span id="ma-final" style="color:var(--blue);font-weight:700;">${fmt(G.mA.wins*G.mA.pool)}</span>
+        <span style="margin-left:1rem;">Sticky W: <span id="ma-sw" style="color:var(--gold);font-weight:700;">${G.mA.stickyWilds.length}</span></span>
+      </div>
+      <div class="ca-row">
+        <button class="btn btn-spin" id="ma-spin" onclick="spinModeA()" style="min-width:140px;">SPIN</button>
+        <button class="btn-outline" id="ma-collect" onclick="collectModeA()">COLLECT ${fmt(G.mA.wins*G.mA.pool)}</button>
+      </div>
+      <div style="font-size:.62rem;color:var(--dim);text-align:center;margin-top:.4rem;letter-spacing:.05em;">
+        QUANTUM BURST 8% (+3s, RESET) · 3× SCATTER = +10s · WILDS LEPLJIVI (MAX 3)
+      </div>
+    </div>`;
+  // Initial grid (clean — no clusters)
+  G.grid=genCleanGridWithWilds(G.mA.stickyWilds);
+  renderGrid(gridEl(),G.grid,null,null,null);
+}
+
+// Generate clean grid (no winning clusters) but with sticky wilds preserved
+function genCleanGridWithWilds(stickyPositions){
+  for(let tries=0;tries<25;tries++){
+    const g=genGrid();
+    stickyPositions.forEach(p=>{if(p>=0&&p<30)g[p]='W';});
+    if(findClusters(g).length===0)return g;
+  }
+  // Fallback: regenerate with wilds, ignore cluster check
+  const g=genGrid();
+  stickyPositions.forEach(p=>{if(p>=0&&p<30)g[p]='W';});
+  return g;
+}
+
+function startModeATimer(){
+  if(G.mA.timerInterval)clearInterval(G.mA.timerInterval);
+  G.mA.timerInterval=setInterval(()=>{
+    if(G.mA.ended){clearInterval(G.mA.timerInterval);return;}
+    G.mA.timeLeft=Math.max(0,G.mA.timeLeft-0.1);
+    const te=$('ma-time');
+    if(te){
+      te.textContent=G.mA.timeLeft.toFixed(1)+'s';
+      // Color shift as time runs out
+      if(G.mA.timeLeft<10)te.style.color='var(--red)';
+      else if(G.mA.timeLeft<20)te.style.color='var(--gold)';
+    }
+    const tb=$('ma-time-bar');
+    if(tb){
+      tb.style.width=Math.min(100,G.mA.timeLeft/45*100)+'%';
+      if(G.mA.timeLeft<10)tb.style.background='linear-gradient(90deg,#EF476F,#FFD166)';
+    }
+    if(G.mA.timeLeft<=0&&!G.mA.ended){
+      G.mA.ended=true;
+      clearInterval(G.mA.timerInterval);
+      endModeA();
+    }
+  },100);
+}
+
+async function spinModeA(){
+  if(G.mA.spinning||G.mA.timeLeft<=0||G.mA.ended)return;
+  G.mA.spinning=true;
+  const sBtn=$('ma-spin');
+  if(sBtn){sBtn.disabled=true;sBtn.style.opacity='.5';}
+
+  // Generate grid with sticky wilds preserved
+  G.grid=genGrid();
+  G.mA.stickyWilds.forEach(p=>{if(p>=0&&p<30)G.grid[p]='W';});
+
+  // FIX: Render NEW grid BEFORE animation (no "two arrangements" flash)
+  const ge=gridEl();
+  renderGrid(ge,G.grid,null,null,null);
+
+  // Animate non-sticky cells (spinCell reveals NEW symbols, doesn't swap)
+  if(ge){
+    ge.querySelectorAll('.cell').forEach((c,i)=>{
+      if(!G.mA.stickyWilds.includes(i)){
+        c.style.animation='none';void c.offsetWidth;
+        c.style.animation='spinCell .5s ease';
+      }
+    });
+  }
+  await delay(550);
+  await delay(180);
+
+  // Quantum Burst check (8%) — resets pool, clears sticky wilds, adds time
+  if(Math.random()<0.08&&G.mA.wins>0){
+    const pEl=$('ma-pool');
+    if(pEl){pEl.style.animation='poolBurst .5s ease';pEl.textContent='BURST!';pEl.style.color='var(--red)';}
+    await delay(900);
+    G.mA.pool=1.0;
+    G.mA.stickyWilds=[];
+    G.mA.timeLeft=Math.min(G.mA.timeLeft+3,60); // FIX: +3s, cap 60s (was 75s)
+    if(pEl){pEl.style.animation='';pEl.style.color='var(--blue)';pEl.textContent='1.0×';}
+    updateModeAUI();
+    // Regenerate clean grid (no wilds)
+    G.grid=genCleanGrid();
+    renderGrid(ge,G.grid,null,null,null);
+    G.mA.spinning=false;
+    if(sBtn&&G.mA.timeLeft>0){sBtn.disabled=false;sBtn.style.opacity='1';}
+    return;
+  }
+
+  // Run cascades with cascade multiplier (depth-based)
+  const w=await runCascades(1);
+  if(w>0){
+    G.mA.wins+=w;
+    // FIX: Pool grows visibly on every win (decimal)
+    G.mA.pool=Math.min(G.mA.pool+0.3,6.0);
+    if(w>G.bet)G.mA.pool=Math.min(G.mA.pool+0.4,6.0);
+  }
+
+  // FIX: Re-apply sticky wilds after cascade — track if anything actually changed
+  // so we only re-render when needed (prevents flash on no-cascade spins)
+  let wildsRestored=false;
+  G.mA.stickyWilds.forEach(p=>{
+    if(p>=0&&p<30&&G.grid[p]!=='W'){G.grid[p]='W';wildsRestored=true;}
+  });
+
+  // Track NEW wilds that appeared during this spin (cap at 6)
+  for(let i=0;i<30;i++){
+    if(G.grid[i]==='W'&&!G.mA.stickyWilds.includes(i)&&G.mA.stickyWilds.length<3){
+      G.mA.stickyWilds.push(i);
+    }
+  }
+
+  // Only re-render if grid was modified by wild restoration
+  // (cascade-ended path already rendered the final state)
+  if(wildsRestored)renderGrid(gridEl(),G.grid,null,null,null);
+
+  // Scatter check (3+ on final grid)
+  const scatCnt=G.grid.filter(s=>s==='B').length;
+  if(scatCnt>=3){
+    G.mA.timeLeft=Math.min(G.mA.timeLeft+10,60); // FIX: +10s cap 60s (was +15s cap 75s)
+    const te=$('ma-time');
+    if(te){te.style.animation='poolBurst .6s ease';setTimeout(()=>{if(te)te.style.animation='';},600);}
+  }
+
+  updateModeAUI();
+  G.mA.spinning=false;
+  if(sBtn&&G.mA.timeLeft>0){sBtn.disabled=false;sBtn.style.opacity='1';}
+}
+
+function updateModeAUI(){
+  const pEl=$('ma-pool');if(pEl)pEl.textContent=G.mA.pool.toFixed(1)+'×';
+  const wEl=$('ma-wins');if(wEl)wEl.textContent=fmt(G.mA.wins);
+  const fEl=$('ma-final');if(fEl)fEl.textContent=fmt(G.mA.wins*G.mA.pool);
+  const cBtn=$('ma-collect');if(cBtn)cBtn.textContent='COLLECT '+fmt(G.mA.wins*G.mA.pool);
+  const swEl=$('ma-sw');if(swEl)swEl.textContent=G.mA.stickyWilds.length;
+}
+
+function collectModeA(){
+  if(G.mA.spinning)return;
+  G.mA.ended=true;
+  if(G.mA.timerInterval){clearInterval(G.mA.timerInterval);G.mA.timerInterval=null;}
+  const win=G.mA.wins*G.mA.pool;G.balance+=win;
+  showResult(win,true,G.mA.pool,'MODE A — Quantum Cascade');
+}
+
+function endModeA(){
+  G.mA.ended=true;
+  if(G.mA.timerInterval){clearInterval(G.mA.timerInterval);G.mA.timerInterval=null;}
+  const sBtn=$('ma-spin');if(sBtn){sBtn.disabled=true;sBtn.style.opacity='.4';}
+  const te=$('ma-time');
+  if(te){te.textContent='0.0s';te.style.color='var(--red)';}
+  // Brief delay so player sees time ran out
+  setTimeout(()=>{
+    const win=G.mA.wins*G.mA.pool;G.balance+=win;
+    showResult(win,true,G.mA.pool,'MODE A — Quantum Cascade');
+  },900);
+}
+
+// ─── MODE B: ASCEND PROTOCOL (MANUAL SPIN) ───────────────────────────────────
+// FIX: Manual spin per level. Bust check happens DURING spins (not at ascend).
+// Risk distributed across 5 spins per level → bust can occur at any spin.
+function startModeB(){
+  G.mB={
+    level:1,
+    accum:0,
+    spinsLeft:5,
+    busted:false,
+    spinning:false,
+    stickyWilds:[] // FIX: Sticky wilds reset per-level
+  };
+  show('s-modeB');
+  G.grid=genCleanGrid(); // Fresh clean grid at start
+  buildModeBUI();
+}
+
+function buildModeBUI(){
+  const lvl=BLEVELS[G.mB.level];
+  const pips=BLEVELS.slice(1).map((l,i)=>{
+    const idx=i+1;
+    const cls=idx<G.mB.level?'done':idx===G.mB.level?'active':'future';
+    return`<div class="lvl-pip ${cls}">L${idx}·${l.name.split(' ')[0]}</div>`;
+  }).join('');
+
+  $('s-modeB').innerHTML=`
+    <div class="mb-hud">
+      <div><div style="font-size:.62rem;color:var(--dim);">ACCUMULATED WIN</div>
+        <div class="accum" id="mb-accum">${fmt(G.mB.accum)}</div></div>
+      <div style="text-align:right;">
+        <div style="font-size:.62rem;color:var(--dim);">LEVEL</div>
+        <div style="font-size:.92rem;font-weight:700;color:var(--blue);" id="mb-lvlname">${lvl.name} ×${lvl.mult}</div>
+      </div>
+    </div>
+    <div class="lvl-bar" id="mb-pips">${pips}</div>
+    <div class="grid-wrap" style="padding:.3rem;"><div class="grid"></div></div>
+    <div class="mb-ftr">${buildModeBFooterHTML()}</div>`;
+
+  renderGrid(gridEl(),G.grid,null,null,null);
+}
+
+// FIX: Build only the footer HTML (used for partial updates after spin/bust)
+// Prevents DOM rebuild of grid which causes visual "reshuffle" flash.
+function buildModeBFooterHTML(){
+  const lvl=BLEVELS[G.mB.level];
+  const isL5=G.mB.level===5;
+  const allSpinsUsed=G.mB.spinsLeft===0;
+  const spinNum=5-G.mB.spinsLeft+1;
+  const perSpinRisk=G.mB.level>1?(lvl.risk/5).toFixed(1):0;
+
+  if(G.mB.busted){
+    return `
+      <div style="color:var(--red);font-size:.84rem;font-weight:800;margin-bottom:.3rem;text-align:center;letter-spacing:.05em;">
+        ⚡ RANO GAŠENJE — Rizik L${G.mB.level} se odigrao tokom spina!
+      </div>
+      <div style="font-size:.72rem;color:var(--dim);margin-bottom:.5rem;text-align:center;">
+        Dobitci dalje izgubljeni · Akumulirano sačuvano: ${fmt(G.mB.accum)}
+      </div>
+      <button class="btn btn-green" style="width:100%;max-width:340px;padding:.7rem;font-size:.9rem;" onclick="collectModeB()">
+        NAPLATI ${fmt(G.mB.accum)}
+      </button>`;
+  }
+  if(isL5&&allSpinsUsed){
+    return `
+      <div style="font-size:.7rem;color:var(--gold);text-align:center;margin-bottom:.4rem;letter-spacing:.05em;">
+        L5 ZAVRŠEN · NOVA RUSH FINALE SPREMNA
+      </div>
+      <button class="btn btn-red" style="width:100%;max-width:340px;padding:.85rem;font-size:.95rem;" onclick="launchModeBNova()">
+        🚀 NOVA RUSH FINALE!
+      </button>`;
+  }
+  if(allSpinsUsed){
+    return `
+      <div style="font-size:.72rem;color:var(--dim);margin-bottom:.4rem;text-align:center;">
+        Nivo završen · Akumulirano: <strong style="color:var(--green);">${fmt(G.mB.accum)}</strong>
+      </div>
+      <div class="ca-row">
+        <button class="btn-coll" onclick="collectModeB()">NAPLATI ${fmt(G.mB.accum)}</button>
+        <button class="btn-asc" onclick="ascendModeB()">NAPREDUJ NA L${G.mB.level+1} ›</button>
+      </div>`;
+  }
+  const riskTxt=G.mB.level>1?` | Rizik per spin: <strong style="color:var(--red);">${perSpinRisk}%</strong>`:'';
+  return `
+    <div style="font-size:.7rem;color:var(--dim);margin-bottom:.4rem;text-align:center;">
+      Spin <strong style="color:var(--text);">${spinNum}/5</strong> | Level mult: <strong style="color:var(--blue);">×${lvl.mult}</strong>${riskTxt}
+    </div>
+    <div class="ca-row">
+      <button class="btn btn-spin" id="mb-spin" onclick="spinModeB()" style="min-width:140px;">SPIN</button>
+      <button class="btn-outline" onclick="collectModeB()">NAPLATI ${fmt(G.mB.accum)}</button>
+    </div>`;
+}
+
+// FIX: Partial update — only refreshes accum value + footer.
+// Grid DOM stays untouched → no "reshuffle" flash between spins.
+function updateModeBFooter(){
+  const ae=$('mb-accum');
+  if(ae)ae.textContent=fmt(G.mB.accum);
+  const ftr=document.querySelector('#s-modeB .mb-ftr');
+  if(ftr)ftr.innerHTML=buildModeBFooterHTML();
+}
+
+async function spinModeB(){
+  if(G.mB.spinning||G.mB.busted||G.mB.spinsLeft<=0)return;
+  G.mB.spinning=true;
+  const sBtn=$('mb-spin');
+  if(sBtn){sBtn.disabled=true;sBtn.style.opacity='.5';}
+
+  const lvl=BLEVELS[G.mB.level];
+
+  // FIX: Per-spin bust check at L2+ (risk distributed across 5 spins)
+  if(G.mB.level>1){
+    const perSpinRisk=lvl.risk/5;
+    if(Math.random()*100<perSpinRisk){
+      // BUST during this spin!
+      G.mB.busted=true;
+      // FIX: Keep current grid — just flash it red. No regen = no "reshuffle".
+      const ge=gridEl();
+      if(ge){
+        ge.querySelectorAll('.cell').forEach(c=>{
+          c.style.animation='none';void c.offsetWidth;
+          c.style.animation='spinCell .35s ease';
+        });
+      }
+      await delay(400);
+      if(ge){
+        ge.querySelectorAll('.cell').forEach(c=>{
+          c.style.animation='none';void c.offsetWidth;
+          c.style.animation='burstFlash .55s ease';
+        });
+      }
+      await delay(700);
+      G.mB.spinning=false;
+      updateModeBFooter(); // FIX: Partial update — grid stays visible
+      return;
+    }
+  }
+
+  // Normal spin with level multiplier
+  // FIX: Apply sticky wilds to new grid before render
+  G.grid=genGrid();
+  G.mB.stickyWilds.forEach(p=>{if(p>=0&&p<30)G.grid[p]='W';});
+
+  // FIX: Render NEW grid BEFORE animation (no "two arrangements" flash)
+  const ge=gridEl();
+  renderGrid(ge,G.grid,null,null,null);
+
+  if(ge){
+    ge.querySelectorAll('.cell').forEach((c,i)=>{
+      // Skip animation on sticky positions for "stuck" feel
+      if(!G.mB.stickyWilds.includes(i)){
+        c.style.animation='none';void c.offsetWidth;
+        c.style.animation='spinCell .48s ease';
+      }
+    });
+  }
+  await delay(520);
+  await delay(150);
+  const w=await runCascades(lvl.mult);
+  if(w>0)G.mB.accum+=w;
+
+  // FIX: Re-apply sticky wilds (may have been consumed in cascade)
+  let wildsRestored=false;
+  G.mB.stickyWilds.forEach(p=>{
+    if(p>=0&&p<30&&G.grid[p]!=='W'){G.grid[p]='W';wildsRestored=true;}
+  });
+
+  // Track NEW wilds that appeared this spin (cap at 3 per level — matches Mode A)
+  for(let i=0;i<30;i++){
+    if(G.grid[i]==='W'&&!G.mB.stickyWilds.includes(i)&&G.mB.stickyWilds.length<3){
+      G.mB.stickyWilds.push(i);
+    }
+  }
+
+  // Only re-render if wilds were restored (otherwise grid is already final)
+  if(wildsRestored)renderGrid(gridEl(),G.grid,null,null,null);
+
+  G.mB.spinsLeft--;
+  G.mB.spinning=false;
+  updateModeBFooter(); // FIX: Partial update — grid DOM untouched
+}
+
+function collectModeB(){
+  const win=G.mB.accum;G.balance+=win;
+  showResult(win,true,BLEVELS[G.mB.level].mult,'MODE B · Level '+G.mB.level);
+}
+
+// FIX: ascendModeB no longer rolls bust — bust happens per-spin during play
+async function ascendModeB(){
+  if(G.mB.level>=5){launchModeBNova();return;}
+  G.mB.level++;
+  G.mB.spinsLeft=5;
+  G.mB.busted=false;
+  G.mB.stickyWilds=[]; // FIX: Wilds reset on level transition
+  G.grid=genCleanGrid(); // Fresh clean grid for new level
+  buildModeBUI();
+}
+
+function launchModeBNova(){
+  const stake=G.mB.accum;
+  if(stake<0.01){collectModeB();return;}
+  G.novaStake=stake;G.novaMult=1.0;G.novaHist=[1.0];G.autoCashout=0;
+  const r=Math.random();
+  const maxMult=Math.min(2000*G.bet/Math.max(stake,0.01),80);
+  G.novaBust=Math.min(Math.max(0.97/r,1.01),maxMult);
+  show('s-nova');
+  buildNovaScreen(`<div style="font-size:.65rem;color:var(--gold);">MAX: ${maxMult.toFixed(1)}×</div>`);
+  G.novaTimer=setInterval(tickNova,85);
+}
+
+// ─── RESULT ───────────────────────────────────────────────────────────────────
+function showResult(amount,win,mult,src){
+  show('s-result');
+  $('s-result').innerHTML=`
+    <div style="font-size:.7rem;letter-spacing:.15em;color:${win?'var(--green)':'var(--red)'};">${win?'CASHOUT SUCCESS':'NOVA BURST'}</div>
+    <div style="font-size:3.5rem;font-weight:900;margin:.3rem 0;color:${win?'var(--gold)':'var(--dim)'};">${win?fmt(amount):'€0.00'}</div>
+    ${mult?`<div style="font-size:.9rem;color:var(--dim);">${win?'at '+fmtX(mult):'burst at '+fmtX(mult)}</div>`:''}
+    ${src?`<div style="font-size:.7rem;color:var(--blue);letter-spacing:.1em;margin:.3rem 0;">${src}</div>`:''}
+    <div style="font-size:.82rem;color:var(--dim);max-width:260px;margin:.6rem 0;">${win?'Dobitci dodani na balans.':'Iznos lansiran u NOVA RUSH izgubljen.'}</div>
+    <div style="display:flex;gap:.7rem;margin-top:1.2rem;">
+      <button class="btn btn-spin" onclick="showGame();setTimeout(()=>{G.spinning=false;const b=$('nb-spin');if(b)b.disabled=false;},100)">NASTAVI DEMO</button>
+      <button class="btn-outline" onclick="G.scatCnt=3;showModeSelect()">BONUS PONOVO</button>
+    </div>
+    <div style="font-size:.78rem;color:var(--dim);margin-top:.9rem;">Balans: <strong style="color:var(--text);">${fmt(G.balance)}</strong></div>`;
+}
+
+// ─── INTRO ────────────────────────────────────────────────────────────────────
+function showIntro(){
+  show('s-intro');
+  $('s-intro').innerHTML=`
+    <div id="star-bg" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;"></div>
+    <div style="position:relative;z-index:1;text-align:center;padding:2rem;">
+      <div class="logo-nova">NOVA</div>
+      <div class="logo-burst">BURST</div>
+      <div style="color:var(--dim);letter-spacing:.15em;font-size:.85rem;margin:.7rem 0 1.2rem;">HYBRID CASCADE SLOT × CRASH GAMBLE</div>
+      <div style="display:flex;gap:2rem;justify-content:center;margin:1.2rem 0;">
+        <div><div class="istat-val">96%</div><div class="istat-lbl">RTP</div></div>
+        <div><div class="istat-val">2,000×</div><div class="istat-lbl">MAX WIN</div></div>
+        <div><div class="istat-val">6×5</div><div class="istat-lbl">GRID</div></div>
+        <div><div class="istat-val">97%</div><div class="istat-lbl">NOVA RUSH</div></div>
+      </div>
+      <button class="btn btn-spin" style="font-size:1.05rem;padding:.85rem 2.8rem;" onclick="showGame()">POKRENITE DEMO</button>
+      <div style="margin-top:.9rem;font-size:.65rem;color:rgba(142,172,192,.4);letter-spacing:.1em;">INVESTOR DEMO v2.2 · POVERLJIVO</div>
+    </div>`;
+  // Stars
+  const bg=$('star-bg');if(!bg)return;
+  let s='';
+  for(let i=0;i<100;i++){
+    const sz=Math.random()<.1?2.5:Math.random()<.3?1.5:1;
+    s+=`<div style="position:absolute;width:${sz}px;height:${sz}px;background:rgba(255,255,255,${.2+Math.random()*.8});border-radius:50%;top:${Math.random()*100}%;left:${Math.random()*100}%;animation:twk ${2.5+Math.random()*4}s ${Math.random()*5}s infinite alternate;"></div>`;
+  }
+  bg.innerHTML=s;
+  if(!$('stk')){const st=document.createElement('style');st.id='stk';
+    st.textContent='@keyframes twk{from{opacity:.1;transform:scale(.7)}to{opacity:1;transform:scale(1.3)}}';
+    document.head.appendChild(st);}
+}
+
+// ─── GAME SCREEN ──────────────────────────────────────────────────────────────
+function showGame(preserveGrid){
+  show('s-game');
+  $('s-game').innerHTML=`
+    <div class="hud">
+      <div><div class="hud-lbl">BALANS</div><div class="hud-val" id="hud-bal">${fmt(G.balance)}</div></div>
+      <div style="text-align:center;"><div class="hud-lbl">WIN</div>
+        <div class="hud-val" style="color:var(--green);" id="hud-win"></div></div>
+      <div style="text-align:right;">
+        <div class="hud-lbl">SCATTER</div>
+        <div class="scat-pips">
+          <div class="scat-pip" id="sp0"></div>
+          <div class="scat-pip" id="sp1"></div>
+          <div class="scat-pip" id="sp2"></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-wrap"><div class="grid"></div></div>
+    <div class="controls">
+      <div class="bet-row">
+        <button class="bbet" onclick="if(G.bet>0.2){G.bet=Math.round((G.bet-.2)*10)/10;$('bet-d').textContent=fmt(G.bet);}">−</button>
+        <div class="bet-disp" id="bet-d">${fmt(G.bet)}</div>
+        <button class="bbet" onclick="if(G.bet<50){G.bet=Math.round((G.bet+.2)*10)/10;$('bet-d').textContent=fmt(G.bet);}">+</button>
+      </div>
+      <button class="btn btn-spin" id="nb-spin" onclick="spin()">SPIN</button>
+      <button class="dp-toggle" id="dp-toggle-btn" onclick="toggleDP()" title="Demo controls" aria-label="Demo controls">⚙</button>
+      <div style="display:flex;flex-direction:column;gap:.3rem;align-items:flex-end;">
+        <button class="btn-pref" id="pref-btn" onclick="showPrefs()" title="NOVA RUSH popup pre-set">${prefBtnLabel()}</button>
+        <button class="btn-outline" onclick="showIntro()" style="padding:.3rem .7rem;font-size:.7rem;">← NAZAD</button>
+      </div>
+    </div>`;
+  // FIX: preserveGrid=true keeps the post-spin state (used after winning collect)
+  // so the player sees the winning grid until they spin again.
+  if(!preserveGrid)G.grid=genCleanGrid();
+  renderGrid(gridEl(),G.grid,null,null,null);
+  // Demo panel se sada otvara klikom na ⚙ gear (u controls), ne pokazuje se automatski
+}
+
+// ─── PRE-SET NOVA RUSH PREFERENCIJE (sekcija 4.3) ────────────────────────────
+function prefBtnLabel(){
+  const p=G.pref;
+  if(p.mode==='COLLECT')return'🔒 COLLECT';
+  if(p.mode==='LAUNCH')return'🚀 LAUNCH';
+  if(p.mode==='CUSTOM')return`🎯 ${p.customMin.toFixed(1)}–${p.customMax.toFixed(1)}×`;
+  if(p.mode==='AUTO')return`⚡ AUTO ${p.autoCashoutMult.toFixed(1)}×`;
+  return'❓ ASK';
+}
+function showPrefs(){
+  const p=G.pref;
+  G._tempPref={mode:p.mode,customMin:p.customMin,customMax:p.customMax,autoCashoutMult:p.autoCashoutMult};
+  const ovl=document.createElement('div');
+  ovl.id='pref-ovl';
+  ovl.className='pref-ovl';
+  ovl.onclick=e=>{if(e.target===ovl)closePrefs();};
+  ovl.innerHTML=`
+    <div class="pref-card">
+      <div class="pref-hd">NOVA RUSH POPUP MOD</div>
+      <div class="pref-sub">Izaberi ponašanje za dobitke iznad uloga (pre-set preferencije)</div>
+      <div class="pref-opt" data-mode="COLLECT" onclick="setPrefMode('COLLECT')">
+        <div class="pref-opt-h">🔒 COLLECT — Uvek naplati</div>
+        <div class="pref-opt-d">Svi dobitci se automatski naplaćuju. Nikad ne pita za Nova Rush. (konzervativno)</div>
+      </div>
+      <div class="pref-opt" data-mode="ASK" onclick="setPrefMode('ASK')">
+        <div class="pref-opt-h">❓ ASK — Pitaj svaki put <span style="color:var(--gold);font-size:.6rem;">DEFAULT</span></div>
+        <div class="pref-opt-d">Prompt sa 8-sekundnim tajmerom za svaki dobitak iznad uloga.</div>
+      </div>
+      <div class="pref-opt" data-mode="LAUNCH" onclick="setPrefMode('LAUNCH')">
+        <div class="pref-opt-h">🚀 LAUNCH — Uvek lansiraj</div>
+        <div class="pref-opt-d">Svaki kvalifikovani dobitak ide direktno u Nova Rush. (crash-native igrači)</div>
+      </div>
+      <div class="pref-opt" data-mode="CUSTOM" onclick="setPrefMode('CUSTOM')">
+        <div class="pref-opt-h">🎯 CUSTOM — Lansiraj u opsegu</div>
+        <div class="pref-opt-d">Nova Rush samo za dobitke u opsegu
+          <input id="pref-min" type="number" min="1.1" max="100" step="0.5" value="${p.customMin.toFixed(1)}" onclick="event.stopPropagation()"/>×
+          do
+          <input id="pref-max" type="number" min="1.5" max="2000" step="0.5" value="${p.customMax.toFixed(1)}" onclick="event.stopPropagation()"/>×.
+          Izvan opsega → naplata.</div>
+      </div>
+      <div class="pref-opt" data-mode="AUTO" onclick="setPrefMode('AUTO')">
+        <div class="pref-opt-h">⚡ AUTO — Lansiraj + auto-cashout</div>
+        <div class="pref-opt-d">Uvek lansiraj, automatski cashout na
+          <input id="pref-auto" type="number" min="1.05" max="50" step="0.1" value="${p.autoCashoutMult.toFixed(1)}" onclick="event.stopPropagation()"/>×.
+          (LAUNCH + autoplay kombinacija)</div>
+      </div>
+      <div class="pref-btns">
+        <button class="btn-outline" onclick="closePrefs()" style="flex:1;">OTKAŽI</button>
+        <button class="btn btn-spin" onclick="savePrefs()" style="flex:1;font-size:.82rem;padding:.5rem 1rem;">POTVRDI</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ovl);
+  updatePrefHighlight();
+}
+function setPrefMode(mode){
+  G._tempPref.mode=mode;
+  updatePrefHighlight();
+}
+function updatePrefHighlight(){
+  const cur=G._tempPref?.mode||G.pref.mode;
+  document.querySelectorAll('.pref-opt').forEach(el=>{
+    el.classList.toggle('active',el.dataset.mode===cur);
+  });
+}
+function savePrefs(){
+  const t=G._tempPref;
+  G.pref.mode=t.mode;
+  // Validacija CUSTOM opsega
+  if(t.mode==='CUSTOM'){
+    const mn=parseFloat($('pref-min')?.value)||2.0;
+    const mx=parseFloat($('pref-max')?.value)||10.0;
+    G.pref.customMin=Math.max(1.1,Math.min(2000,mn));
+    G.pref.customMax=Math.max(G.pref.customMin+0.1,Math.min(2000,mx));
+  }
+  // Validacija AUTO cashout multipliera
+  if(t.mode==='AUTO'){
+    const v=parseFloat($('pref-auto')?.value)||2.0;
+    G.pref.autoCashoutMult=Math.max(1.05,Math.min(50,v));
+  }
+  closePrefs();
+  // Ažuriraj dugme
+  const b=$('pref-btn');if(b)b.textContent=prefBtnLabel();
+}
+function closePrefs(){
+  delete G._tempPref;
+  const ovl=$('pref-ovl');
+  if(ovl)ovl.remove();
+}
+
+// ─── DEMO HELPERS ─────────────────────────────────────────────────────────────
+function resetDemo(){
+  clearInterval(G.novaTimer);G.novaTimer=null;
+  G.balance=1000;G.bet=1;G.spinning=false;
+  toggleDP(false); // zatvori panel ako je otvoren
+  showIntro();
+}
+
+// ─── DEMO CONTROL PANEL TOGGLE ────────────────────────────────────────────────
+function toggleDP(force){
+  const dp=$('dp');const tgl=$('dp-toggle-btn');
+  if(!dp)return;
+  let expanded;
+  if(force===false){dp.classList.remove('expanded');expanded=false;}
+  else if(force===true){dp.classList.add('expanded');expanded=true;}
+  else{expanded=dp.classList.toggle('expanded');}
+  if(tgl){tgl.classList.toggle('is-active',expanded);}
+}
+// Auto-close panel posle klika na neku demo akciju
+// (script je na kraju body-ja, DOM je već parsiran)
+(function(){
+  const dp=$('dp');
+  if(!dp)return;
+  dp.addEventListener('click',e=>{
+    if(e.target.classList&&e.target.classList.contains('dp-btn')){
+      setTimeout(()=>toggleDP(false),80);
+    }
+  });
+})();
+
+// ─── PIN ACCESS CONTROL ──────────────────────────────────────────────────────
+// PIN code za pristup demo verziji. Promeniti pre deploy-a ako je potrebno.
+// Napomena: ovo je client-side zaštita za sprečavanje slučajnog pristupa,
+// nije pravi security mehanizam.
+const DEMO_PIN='2387'; // Godina iz lore-a "Godina 2387" — lako za pamtiti
+const PIN_MAX_ATTEMPTS=5;
+const PIN_LOCKOUT_MS=30000;
+let pinAttempts=0;
+let pinLockedUntil=0;
+
+function checkPin(){
+  const inp=$('pin-input');
+  const err=$('pin-err');
+  const btn=document.querySelector('.pin-btn');
+  if(!inp)return;
+  const now=Date.now();
+  if(now<pinLockedUntil){
+    const sec=Math.ceil((pinLockedUntil-now)/1000);
+    if(err)err.textContent=`Previše pokušaja. Sačekaj ${sec}s.`;
+    return;
+  }
+  const entered=(inp.value||'').trim();
+  if(entered===DEMO_PIN){
+    try{sessionStorage.setItem('nb-auth','ok');}catch(e){}
+    if(err)err.textContent='';
+    // Smooth transition: hide pin screen, show intro
+    const pinScreen=$('s-pin');
+    if(pinScreen)pinScreen.style.transition='opacity .35s';
+    if(pinScreen)pinScreen.style.opacity='0';
+    setTimeout(()=>{showIntro();},350);
+    return;
+  }
+  // Pogrešan PIN
+  pinAttempts++;
+  if(inp){
+    inp.value='';
+    inp.classList.add('shake');
+    setTimeout(()=>inp.classList.remove('shake'),400);
+    inp.focus();
+  }
+  if(pinAttempts>=PIN_MAX_ATTEMPTS){
+    pinLockedUntil=now+PIN_LOCKOUT_MS;
+    pinAttempts=0;
+    if(err)err.textContent=`Previše pokušaja. Pristup blokiran 30s.`;
+    if(inp)inp.disabled=true;
+    if(btn)btn.disabled=true;
+    setTimeout(()=>{
+      if(inp){inp.disabled=false;inp.focus();}
+      if(btn)btn.disabled=false;
+      if(err)err.textContent='';
+    },PIN_LOCKOUT_MS);
+  } else {
+    if(err)err.textContent=`Pogrešan PIN. Pokušaj ${pinAttempts}/${PIN_MAX_ATTEMPTS}.`;
+  }
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function initApp(){
+  // Provera da li je već autentifikovan u ovoj sesiji
+  try{
+    if(sessionStorage.getItem('nb-auth')==='ok'){
+      showIntro();
+      return;
+    }
+  }catch(e){/* sessionStorage može biti blokiran u nekim browserima */}
+  // Prikaži PIN screen
+  show('s-pin');
+  setTimeout(()=>{const i=$('pin-input');if(i)i.focus();},250);
+}
+
+initApp();
+</script>
+</body>
+</html>

@@ -363,22 +363,48 @@ button, .btn, .btn-pref, .btn-outline, .btn-coll, .btn-asc, .btn-cash,
     <button class="dp-btn" onclick="G.scatCnt=3;showModeSelect();setTimeout(startModeA,120)">▶ Demo Mode A</button>
     <button class="dp-btn" onclick="G.scatCnt=3;showModeSelect();setTimeout(startModeB,120)">▶ Demo Mode B</button>
     <button class="dp-btn" onclick="resetDemo()">↺ Reset Demo</button>
+    <div class="dp-t" style="margin-top:.8rem;">SESSION TRACKER</div>
+    <button class="dp-btn" onclick="showStatsModal()" style="background:rgba(92,219,149,.10);border-color:rgba(92,219,149,.4);color:#5cdb95;">📊 VIDI STATISTIKU</button>
+    <button class="dp-btn" onclick="downloadSessionLog()" style="background:rgba(0,180,216,.10);border-color:rgba(0,180,216,.4);color:#00B4D8;">⬇ DOWNLOAD LOG (JSON)</button>
+    <button class="dp-btn" onclick="resetSession()" style="background:rgba(230,57,70,.07);border-color:rgba(230,57,70,.3);color:#e63946;">↺ RESETUJ SESIJU</button>
+  </div>
+</div>
+
+<!-- Stats Modal -->
+<div id="stats-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(8px);">
+  <div style="background:#0a1929;border:1px solid #00B4D8;border-radius:12px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;padding:1.4rem;color:#e8eef5;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:.7rem;">
+      <div>
+        <div style="font-size:1.1rem;font-weight:800;color:#00B4D8;">📊 SESSION STATS</div>
+        <div style="font-size:.65rem;color:#888;margin-top:.15rem;">Live tracker — sve se beleži automatski</div>
+      </div>
+      <button onclick="hideStatsModal()" style="background:transparent;border:none;color:#888;font-size:1.5rem;cursor:pointer;padding:0 .4rem;">✕</button>
+    </div>
+    <div id="stats-content"></div>
+    <div style="display:flex;gap:.5rem;margin-top:1.2rem;">
+      <button onclick="downloadSessionLog()" style="flex:1;padding:.7rem;background:rgba(0,180,216,.18);border:1px solid #00B4D8;color:#00B4D8;border-radius:6px;font-weight:700;cursor:pointer;">⬇ DOWNLOAD JSON</button>
+      <button onclick="if(confirm('Resetuj sesiju? Sve dosadašnje podatke ćeš izgubiti.'))resetSession()" style="padding:.7rem 1rem;background:rgba(230,57,70,.10);border:1px solid rgba(230,57,70,.4);color:#e63946;border-radius:6px;cursor:pointer;">↺ RESET</button>
+    </div>
   </div>
 </div>
 <script>
 // ─── SYMBOL DEFINITIONS ───────────────────────────────────────────────────────
 // W = letter "W" (Wild), B = letter "S" (Scatter) — visually distinct from pay symbols
-// Paytables tuned via 1M-spin simulation: RTP 96.4%, Hit 31%, Win>Stake 13.4%
+// V2 BALANCE: All paytable values scaled to 0.95× of V5b (1M-spin tuned base)
+// Combined with 4+ scatter trigger + tighter bonus modes + 98% NOVA RUSH RTP
+// → Target overall RTP ~97% (COLLECT), ~96% (AUTO) for crypto-casino fair-feel
 const SYM={
-  Q:{ch:'◈',clr:'#00EEFF',bg:'rgba(0,130,190,.55)',bdr:'rgba(0,238,255,.85)',  pay:[0.90,2.96,7.20,16.40,36,72,144,288,624]},
-  N:{ch:'◆',clr:'#EE55FF',bg:'rgba(120,15,160,.55)',bdr:'rgba(238,85,255,.85)',pay:[0.45,1.64,3.92,9.20,19.60,39.20,78.40,164,348]},
-  S:{ch:'★',clr:'#FFD700',bg:'rgba(140,90,0,.55)',  bdr:'rgba(255,215,0,.85)', pay:[0.27,1.04,2.64,6.24,13.60,28,57.60,121.60,262.40]},
-  I:{ch:'◉',clr:'#55DDFF',bg:'rgba(0,70,140,.55)', bdr:'rgba(85,221,255,.85)',pay:[0.16,0.62,1.64,3.92,8.80,18.40,38,80,173.60]},
-  A:{ch:'⬡',clr:'#BBDDEE',bg:'rgba(40,70,90,.5)',  bdr:'rgba(187,221,238,.75)',pay:[0.09,0.36,0.98,2.36,5.36,11.20,23.60,49.60,108]},
-  T:{ch:'⊕',clr:'#55FFBB',bg:'rgba(0,90,65,.5)',   bdr:'rgba(85,255,187,.75)',pay:[0.06,0.25,0.66,1.58,3.60,7.52,15.76,33.60,72]},
-  C:{ch:'✦',clr:'#CCEEFF',bg:'rgba(5,30,80,.5)',   bdr:'rgba(204,238,255,.7)', pay:[0.04,0.18,0.49,1.22,2.76,5.76,12.16,25.60,56]},
-  D:{ch:'▪',clr:'#7799BB',bg:'rgba(15,35,55,.5)',  bdr:'rgba(119,153,187,.65)',pay:[0.04,0.12,0.31,0.78,1.77,3.68,7.76,16.40,35.20]},
-  // FIX: Wild = bold "W" letter, Scatter = bold "S" letter — clearly distinct
+  // V2 BALANCE: All paytable values scaled by 0.95 (was V5b values)
+  // Combined with 4+ scatter trigger + tighter bonuses → COLLECT RTP ~97%
+  Q:{ch:'◈',clr:'#00EEFF',bg:'rgba(0,130,190,.55)',bdr:'rgba(0,238,255,.85)',  pay:[0.86,2.81,6.84,15.58,34.20,68.40,136.80,273.60,592.80]},
+  N:{ch:'◆',clr:'#EE55FF',bg:'rgba(120,15,160,.55)',bdr:'rgba(238,85,255,.85)',pay:[0.43,1.56,3.72,8.74,18.62,37.24,74.48,155.80,330.60]},
+  S:{ch:'★',clr:'#FFD700',bg:'rgba(140,90,0,.55)',  bdr:'rgba(255,215,0,.85)', pay:[0.26,0.99,2.51,5.93,12.92,26.60,54.72,115.52,249.28]},
+  I:{ch:'◉',clr:'#55DDFF',bg:'rgba(0,70,140,.55)', bdr:'rgba(85,221,255,.85)',pay:[0.15,0.59,1.56,3.72,8.36,17.48,36.10,76.00,164.92]},
+  A:{ch:'⬡',clr:'#BBDDEE',bg:'rgba(40,70,90,.5)',  bdr:'rgba(187,221,238,.75)',pay:[0.09,0.34,0.93,2.24,5.09,10.64,22.42,47.12,102.60]},
+  T:{ch:'⊕',clr:'#55FFBB',bg:'rgba(0,90,65,.5)',   bdr:'rgba(85,255,187,.75)',pay:[0.06,0.24,0.63,1.50,3.42,7.14,14.97,31.92,68.40]},
+  C:{ch:'✦',clr:'#CCEEFF',bg:'rgba(5,30,80,.5)',   bdr:'rgba(204,238,255,.7)', pay:[0.04,0.17,0.47,1.16,2.62,5.47,11.55,24.32,53.20]},
+  D:{ch:'▪',clr:'#7799BB',bg:'rgba(15,35,55,.5)',  bdr:'rgba(119,153,187,.65)',pay:[0.04,0.11,0.29,0.74,1.68,3.50,7.37,15.58,33.44]},
+  // Wild = bold "W" letter, Scatter = bold "S" letter — clearly distinct
   W:{ch:'W', clr:'#FFDD00',bg:'rgba(150,110,0,.65)',bdr:'rgba(255,221,0,.95)', special:true},
   B:{ch:'S', clr:'#FF2244',bg:'rgba(150,10,25,.65)',bdr:'rgba(255,34,68,.95)', special:true}
 };
@@ -388,15 +414,15 @@ const SYM={
 // W=3 ensures wilds appear ~1.8x per spin on average → visible each session
 const POOL='QQNNNSSSSIIIIIAAAAAAAATTTTTTTTTCCCCCCCDDDDDDDWWWB'.split('');
 
-// FIX: Mode B — higher bust risk + lower multipliers for realistic balance
-// L2=20%, L3=35%, L4=50% → P(reaching L5) = 26% (was 33.7%)
-// Multipliers reduced: 1/2/3/5/8 (was 1/2/4/8/15) — caps Mode B max payout
+// V2 BALANCE: Softer multipliers (1/1.5/2/3/5 — was 1/2/3/5/8)
+// Combined with 3 spins per level (was 5) → avg payout ~10× bet
+// Per-spin bust rates unchanged: L1=0%, L2=4%, L3=7%, L4=10%, L5=10%
 const BLEVELS=[null,
-  {name:'Low Orbit',  mult:1, risk:0 },
-  {name:'Mid Orbit',  mult:2, risk:20},
-  {name:'High Orbit', mult:3, risk:35},
-  {name:'Deep Space', mult:5, risk:50},
-  {name:'Nova Threshold',mult:8,risk:50}  // FIX: was 0 — now 50% (10% per spin) since per-spin bust is the new model
+  {name:'Low Orbit',  mult:1,   risk:0 },
+  {name:'Mid Orbit',  mult:1.5, risk:20},
+  {name:'High Orbit', mult:2,   risk:35},
+  {name:'Deep Space', mult:3,   risk:50},
+  {name:'Nova Threshold',mult:5,risk:50}
 ];
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
@@ -404,6 +430,8 @@ const G={
   balance:1000,bet:1,spinWin:0,scatCnt:0,
   grid:new Array(30).fill('D'),
   novaStake:0,novaBust:0,novaMult:1.0,novaHist:[],novaTimer:null,
+  // V2 NOVA RUSH UX: persistent crash history (last 10 crash points)
+  crashHistory:[],
   mA:{spins:0,pool:1,wins:0},
   mB:{level:1,accum:0},
   spinning:false,
@@ -417,6 +445,282 @@ const G={
     autoCashoutMult:2.0  // Auto-cashout multiplier u AUTO modu
   }
 };
+
+// ─── SESSION TRACKER ─────────────────────────────────────────────────────────
+// Beleži kompletnu istoriju sesije za analizu. Persistuje preko localStorage,
+// preživi refresh. User pritisne "📊 STATS" → vidi live brojke i može da
+// download-uje JSON za slanje nazad za analizu.
+const Tracker={
+  data:null,
+  STORE_KEY:'nb_v2_session',
+
+  init(){
+    try{
+      const saved=localStorage.getItem(this.STORE_KEY);
+      if(saved){
+        this.data=JSON.parse(saved);
+        return;
+      }
+    }catch(e){}
+    this.startNew();
+  },
+
+  startNew(){
+    this.data={
+      version:'V2.0',
+      started_at:new Date().toISOString(),
+      ended_at:null,
+      spins:[],
+      bonuses:[],
+      nova_rushes:[],
+      _pending_bonus_trigger:null
+    };
+    this.save();
+  },
+
+  reset(){this.startNew();},
+
+  save(){
+    try{localStorage.setItem(this.STORE_KEY,JSON.stringify(this.data));}catch(e){}
+  },
+
+  // Log a base game spin (called at end of spin() before any branch)
+  logSpin(opts){
+    const n=this.data.spins.length+1;
+    this.data.spins.push({
+      n,
+      time:new Date().toISOString(),
+      bet:opts.bet,
+      win:opts.win,
+      cascades:opts.cascades||0,
+      scatter_count:opts.scatter_count,
+      triggered_bonus:opts.triggered_bonus||false,
+      triggered_nr_eligible:opts.win>opts.bet,
+      balance_after:opts.balance_after
+    });
+    if(opts.triggered_bonus){
+      this.data._pending_bonus_trigger=n;
+    }
+    this.save();
+  },
+
+  // Log a Mode A bonus completion
+  logModeA(opts){
+    this.data.bonuses.push({
+      mode:'A',
+      trigger_spin:this.data._pending_bonus_trigger,
+      time:new Date().toISOString(),
+      payout:opts.payout,
+      ended_by:opts.ended_by, // 'QB' | 'TIMER' | 'COLLECT'
+      details:{
+        spins:opts.spins,
+        accumulated:opts.accumulated,
+        final_pool:opts.final_pool
+      }
+    });
+    this.data._pending_bonus_trigger=null;
+    this.save();
+  },
+
+  // Log a Mode B bonus completion
+  logModeB(opts){
+    this.data.bonuses.push({
+      mode:'B',
+      trigger_spin:this.data._pending_bonus_trigger,
+      time:new Date().toISOString(),
+      payout:opts.payout,
+      ended_by:opts.ended_by, // 'COLLECT_L1' | 'BUST_L3' | 'L5_NR_WIN' | etc
+      details:{
+        max_level:opts.max_level,
+        accumulated:opts.accumulated,
+        busted:opts.busted,
+        nr_finale:opts.nr_finale // null | { crash, cashout, won, multiplier }
+      }
+    });
+    this.data._pending_bonus_trigger=null;
+    this.save();
+  },
+
+  // Log a NOVA RUSH outcome (base game NR, not Mode B finale)
+  logNovaRush(opts){
+    this.data.nova_rushes.push({
+      time:new Date().toISOString(),
+      source:opts.source||'base',
+      stake:opts.stake,
+      cashout_target:opts.cashout_target||null,
+      crash_mult:opts.crash_mult,
+      cashout_at:opts.cashout_at||null,
+      won:opts.won,
+      payout:opts.payout||0,
+      net:opts.won?(opts.payout-opts.stake):-opts.stake
+    });
+    this.save();
+  },
+
+  // Compute summary stats
+  summary(){
+    const spins=this.data.spins;
+    const bonuses=this.data.bonuses;
+    const nrs=this.data.nova_rushes.filter(nr=>nr.source==='base'); // exclude Mode B finale
+    const n=spins.length;
+    if(n===0)return {total_spins:0};
+
+    const totalWagered=spins.reduce((a,s)=>a+s.bet,0);
+    const baseTotal=spins.reduce((a,s)=>a+s.win,0);
+    const bonusTotal=bonuses.reduce((a,b)=>a+b.payout,0);
+    const nrNet=nrs.reduce((a,nr)=>a+nr.net,0);
+    const totalReturn=baseTotal+bonusTotal+nrNet;
+
+    return {
+      total_spins:n,
+      total_wagered:totalWagered.toFixed(2),
+      total_return:totalReturn.toFixed(2),
+      net:(totalReturn-totalWagered).toFixed(2),
+      rtp:totalWagered>0?((totalReturn/totalWagered)*100).toFixed(2)+'%':'—',
+      hit_rate:((spins.filter(s=>s.win>0).length/n)*100).toFixed(2)+'%',
+      base_rtp:((baseTotal/totalWagered)*100).toFixed(2)+'%',
+      bonus_contrib:totalWagered>0?((bonusTotal/totalWagered)*100).toFixed(2)+'%':'—',
+      nr_contrib:totalWagered>0?((nrNet/totalWagered)*100).toFixed(2)+'%':'—',
+      bonus_count:bonuses.length,
+      bonus_a:bonuses.filter(b=>b.mode==='A').length,
+      bonus_b:bonuses.filter(b=>b.mode==='B').length,
+      nr_count:nrs.length,
+      nr_wins:nrs.filter(nr=>nr.won).length,
+      nr_losses:nrs.filter(nr=>!nr.won).length,
+      duration_min:Math.round((Date.now()-new Date(this.data.started_at).getTime())/60000)
+    };
+  },
+
+  // Export as JSON download
+  download(){
+    this.data.ended_at=new Date().toISOString();
+    this.save();
+    const exportData={
+      ...this.data,
+      summary:this.summary()
+    };
+    const json=JSON.stringify(exportData,null,2);
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+    a.download=`nova_burst_session_${ts}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+};
+
+// ─── STATS MODAL FUNCTIONS ───────────────────────────────────────────────────
+function showStatsModal(){
+  // Close demo panel first
+  const dp=$('dp');if(dp)dp.classList.remove('open');
+  const m=$('stats-modal');
+  if(!m)return;
+  renderStatsContent();
+  m.style.display='flex';
+}
+function hideStatsModal(){
+  const m=$('stats-modal');if(m)m.style.display='none';
+}
+function renderStatsContent(){
+  const c=$('stats-content');if(!c)return;
+  const s=Tracker.summary();
+  if(s.total_spins===0){
+    c.innerHTML=`<div style="text-align:center;color:#888;padding:1.5rem;font-size:.9rem;">
+      Još uvek nema spinova u sesiji. Zatvori panel i spinuj nešto, pa se vrati!
+    </div>`;
+    return;
+  }
+  const data=Tracker.data;
+  const recentSpins=data.spins.slice(-10).reverse();
+  const recentBonuses=data.bonuses.slice(-5).reverse();
+  const recentNRs=data.nova_rushes.slice(-5).reverse();
+
+  let bonusList='';
+  if(recentBonuses.length){
+    bonusList='<div style="margin-top:1rem;"><div style="font-size:.65rem;color:#888;letter-spacing:.1em;margin-bottom:.4rem;">POSLEDNJI BONUSI</div>';
+    recentBonuses.forEach(b=>{
+      const c=b.mode==='A'?'#00B4D8':'#f4b942';
+      const payoutMult=b.payout.toFixed(2);
+      bonusList+=`<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:rgba(255,255,255,.03);border-left:3px solid ${c};margin-bottom:.25rem;font-size:.78rem;">
+        <span><b style="color:${c};">MODE ${b.mode}</b> · ${b.ended_by}</span>
+        <span style="color:${b.payout>0?'#5cdb95':'#e63946'};font-weight:700;">€${payoutMult}</span>
+      </div>`;
+    });
+    bonusList+='</div>';
+  }
+
+  let nrList='';
+  if(recentNRs.length){
+    nrList='<div style="margin-top:.8rem;"><div style="font-size:.65rem;color:#888;letter-spacing:.1em;margin-bottom:.4rem;">POSLEDNJI NOVA RUSH</div>';
+    recentNRs.forEach(nr=>{
+      const c=nr.won?'#5cdb95':'#e63946';
+      const detail=nr.won?`cashed at ${nr.cashout_at.toFixed(2)}× → +€${(nr.payout-nr.stake).toFixed(2)}`:`crashed at ${nr.crash_mult.toFixed(2)}× → −€${nr.stake.toFixed(2)}`;
+      nrList+=`<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:rgba(255,255,255,.03);border-left:3px solid ${c};margin-bottom:.25rem;font-size:.72rem;">
+        <span>Stake €${nr.stake.toFixed(2)} · ${nr.source==='mode_b_finale'?'MODE B':'BASE'}</span>
+        <span style="color:${c};font-weight:700;">${detail}</span>
+      </div>`;
+    });
+    nrList+='</div>';
+  }
+
+  const netColor=parseFloat(s.net)>=0?'#5cdb95':'#e63946';
+  c.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.8rem;">
+      <div style="background:rgba(0,180,216,.08);padding:.6rem;border-radius:6px;border:1px solid rgba(0,180,216,.2);">
+        <div style="font-size:.55rem;color:#888;letter-spacing:.08em;">UKUPNO SPINOVA</div>
+        <div style="font-size:1.4rem;font-weight:800;color:#00B4D8;">${s.total_spins}</div>
+      </div>
+      <div style="background:rgba(0,180,216,.08);padding:.6rem;border-radius:6px;border:1px solid rgba(0,180,216,.2);">
+        <div style="font-size:.55rem;color:#888;letter-spacing:.08em;">VREME (min)</div>
+        <div style="font-size:1.4rem;font-weight:800;color:#00B4D8;">${s.duration_min}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.8rem;">
+      <div style="background:rgba(255,255,255,.04);padding:.55rem;border-radius:6px;">
+        <div style="font-size:.55rem;color:#888;letter-spacing:.08em;">WAGERED</div>
+        <div style="font-size:1rem;font-weight:700;">€${s.total_wagered}</div>
+      </div>
+      <div style="background:rgba(255,255,255,.04);padding:.55rem;border-radius:6px;">
+        <div style="font-size:.55rem;color:#888;letter-spacing:.08em;">VRAĆENO</div>
+        <div style="font-size:1rem;font-weight:700;">€${s.total_return}</div>
+      </div>
+      <div style="background:rgba(255,255,255,.04);padding:.55rem;border-radius:6px;">
+        <div style="font-size:.55rem;color:#888;letter-spacing:.08em;">NET P/L</div>
+        <div style="font-size:1rem;font-weight:700;color:${netColor};">${parseFloat(s.net)>=0?'+':''}€${s.net}</div>
+      </div>
+      <div style="background:rgba(255,255,255,.04);padding:.55rem;border-radius:6px;">
+        <div style="font-size:.55rem;color:#888;letter-spacing:.08em;">RTP</div>
+        <div style="font-size:1rem;font-weight:700;color:#f4b942;">${s.rtp}</div>
+      </div>
+    </div>
+    <div style="background:rgba(255,255,255,.03);padding:.6rem;border-radius:6px;margin-bottom:.6rem;font-size:.75rem;">
+      <div style="display:flex;justify-content:space-between;padding:.18rem 0;"><span style="color:#888;">Hit rate:</span><span><b>${s.hit_rate}</b></span></div>
+      <div style="display:flex;justify-content:space-between;padding:.18rem 0;"><span style="color:#888;">Base contrib:</span><span>${s.base_rtp}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.18rem 0;"><span style="color:#888;">Bonus contrib:</span><span>${s.bonus_contrib}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.18rem 0;"><span style="color:#888;">NOVA RUSH adj:</span><span>${s.nr_contrib}</span></div>
+    </div>
+    <div style="background:rgba(255,255,255,.03);padding:.6rem;border-radius:6px;margin-bottom:.6rem;font-size:.75rem;">
+      <div style="display:flex;justify-content:space-between;padding:.18rem 0;"><span style="color:#888;">Bonusi (A / B):</span><span><b>${s.bonus_a}</b> / <b>${s.bonus_b}</b></span></div>
+      <div style="display:flex;justify-content:space-between;padding:.18rem 0;"><span style="color:#888;">NOVA RUSH (W / L):</span><span><b style="color:#5cdb95;">${s.nr_wins}</b> / <b style="color:#e63946;">${s.nr_losses}</b></span></div>
+    </div>
+    ${bonusList}
+    ${nrList}`;
+}
+function downloadSessionLog(){
+  Tracker.download();
+  // Brief confirmation
+  const ts=new Date().toISOString().slice(11,19);
+  alert(`✓ Session log preuzet (nova_burst_session_*.json)\n\nVreme: ${ts}\nUkupno spinova: ${Tracker.summary().total_spins}\n\nPošalji ovaj fajl nazad za analizu.`);
+}
+function resetSession(){
+  Tracker.reset();
+  renderStatsContent();
+  alert('✓ Sesija resetovana. Brojanje počinje od 0.');
+}
 
 // ─── UTILITIES ────────────────────────────────────────────────────────────────
 const $=id=>document.getElementById(id);
@@ -584,7 +888,16 @@ async function spin(){
   G.spinWin=totalWin;
   G.scatCnt=G.grid.filter(s=>s==='B').length;
   updScatPips();
-  if(G.scatCnt>=3){G.spinning=false;await delay(400);showModeSelect();return;}
+  // TRACKER: log this base game spin
+  Tracker.logSpin({
+    bet:G.bet,
+    win:totalWin,
+    cascades:G.cascDepth||0,
+    scatter_count:G.scatCnt,
+    triggered_bonus:G.scatCnt>=4,
+    balance_after:G.balance+totalWin
+  });
+  if(G.scatCnt>=4){G.spinning=false;await delay(400);showModeSelect();return;}
   // FIX: Pre-set preferencije (sekcija 4.3 izveštaja) — routing po G.pref.mode
   if(totalWin>G.bet){
     updWin(totalWin);
@@ -661,27 +974,41 @@ function launchNova(amt){clearInterval(G._ptimer);startNova(amt);}
 // ─── NOVA RUSH ────────────────────────────────────────────────────────────────
 function startNova(stake,autoCashoutMult){
   G.novaStake=stake;G.novaMult=1.0;G.novaHist=[1.0];
+  G.novaSource='base'; // TRACKER context
   G.autoCashout=autoCashoutMult||0; // FIX: AUTO mode pre-set, default 0 (manual)
   const r=Math.random();
-  G.novaBust=Math.min(Math.max(0.97/r,1.01),180);
+  // V2: 98% RTP NOVA RUSH (was 97%) — fair-feel boost zarad zadovoljstva igrača
+  // Crash formula: max(0.98/r, 1.01), capped at 180×
+  G.novaBust=Math.min(Math.max(0.98/r,1.01),180);
   show('s-nova');buildNovaScreen();
   G.novaTimer=setInterval(tickNova,85);
 }
 function buildNovaScreen(extraHdr){
+  // V2 NOVA RUSH UX: render crash history bar, suggested cashout zones, Quick Cash
+  const histHtml=buildCrashHistoryHTML();
+  const zonesHtml=buildSuggestedZonesHTML();
   $('s-nova').innerHTML=`
     <div class="nova-hdr">
       <div class="nova-stake">AT RISK: <b>${fmt(G.novaStake)}</b></div>
       <div class="dbar-w"><div class="dbar" id="dbar"></div></div>
-      ${extraHdr||'<div style="font-size:.68rem;color:var(--dim);">NOVA RUSH</div>'}
+      ${extraHdr||'<div style="font-size:.68rem;color:var(--dim);">NOVA RUSH · 98% RTP</div>'}
     </div>
+    ${histHtml}
     <div class="nova-body">
       <div class="nova-lbl">MULTIPLIER</div>
       <div class="nova-mult" id="nmult">1.00×</div>
       <div class="nova-val" id="nval">${fmt(G.novaStake)}</div>
       <canvas id="nova-cv" width="480" height="110"></canvas>
     </div>
+    ${zonesHtml}
     <div class="nova-ftr">
       <button class="btn-cash" id="ncash" onclick="cashout()">CASHOUT  ${fmt(G.novaStake)}</button>
+      <div class="ac-row" style="margin:.3rem 0;">
+        <button class="btn-quick" onclick="quickCash110()" style="padding:.42rem .8rem;font-size:.7rem;border-radius:6px;background:rgba(92,219,149,.18);border:1px solid rgba(92,219,149,.6);color:#5cdb95;cursor:pointer;font-weight:700;letter-spacing:.05em;">
+          ⚡ QUICK CASH @ 1.10×
+        </button>
+        <span style="font-size:.62rem;color:var(--dim);margin-left:.5rem;">88% uspeh</span>
+      </div>
       <div class="ac-row">
         <span>Auto-cashout:</span>
         <input type="number" placeholder="pr. 3.00" min="1.01" step=".5"
@@ -689,6 +1016,59 @@ function buildNovaScreen(extraHdr){
           oninput="G.autoCashout=parseFloat(this.value)||0"/>×
       </div>
     </div>`;
+}
+
+// V2 NOVA RUSH UX: Crash history bar showing last 10 crash points
+function buildCrashHistoryHTML(){
+  if(!G.crashHistory||G.crashHistory.length===0){
+    return `<div style="padding:.4rem .8rem;text-align:center;font-size:.62rem;color:var(--dim);letter-spacing:.08em;">
+      ISTORIJA: prazna (prvi NOVA RUSH ove sesije)
+    </div>`;
+  }
+  const items=G.crashHistory.slice(-10).map(c=>{
+    let col='#5cdb95'; // green - safe
+    if(c<1.2)col='#e63946';     // red - instant bust
+    else if(c<2)col='#f4b942';  // gold - low
+    else if(c<5)col='#00B4D8';  // blue - medium
+    else col='#a78bfa';         // purple - high
+    return `<span style="display:inline-block;padding:.18rem .42rem;margin:0 .15rem;background:rgba(255,255,255,.04);border-radius:4px;font-size:.62rem;font-weight:700;color:${col};border:1px solid ${col}44;">${c.toFixed(2)}×</span>`;
+  }).join('');
+  return `<div style="padding:.4rem .6rem;text-align:center;background:rgba(0,0,0,.18);border-bottom:1px solid rgba(255,255,255,.06);">
+    <div style="font-size:.55rem;color:var(--dim);letter-spacing:.1em;margin-bottom:.3rem;">POSLEDNJIH ${Math.min(10,G.crashHistory.length)} CRASH-eva</div>
+    <div style="white-space:nowrap;overflow-x:auto;">${items}</div>
+  </div>`;
+}
+
+// V2 NOVA RUSH UX: Suggested cashout zones with realistic probabilities
+// P(crash >= X) = 0.98/X for X >= 1.01 (V2 98% RTP)
+function buildSuggestedZonesHTML(){
+  const zones=[
+    {mult:1.1,  pct:'89%', col:'#5cdb95', label:'SIGURNA'},
+    {mult:1.5,  pct:'65%', col:'#16D996', label:'NISKI'},
+    {mult:2.0,  pct:'49%', col:'#f4b942', label:'SREDNJI'},
+    {mult:5.0,  pct:'20%', col:'#FF7B5C', label:'VISOK'},
+    {mult:10.0, pct:'10%', col:'#e63946', label:'EKSTREMNI'}
+  ];
+  const items=zones.map(z=>`
+    <div style="text-align:center;padding:0 .3rem;">
+      <div style="font-size:.78rem;font-weight:800;color:${z.col};">${z.mult.toFixed(2)}×</div>
+      <div style="font-size:.55rem;color:var(--dim);">${z.pct} uspeh</div>
+    </div>`).join('<div style="width:1px;background:rgba(255,255,255,.08);align-self:stretch;"></div>');
+  return `<div style="padding:.4rem .6rem;background:rgba(0,180,216,.06);border-top:1px solid rgba(0,180,216,.15);border-bottom:1px solid rgba(0,180,216,.15);">
+    <div style="font-size:.55rem;color:var(--blue);letter-spacing:.1em;text-align:center;margin-bottom:.3rem;">CASHOUT ZONE — VEROVATNOĆE</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;">${items}</div>
+  </div>`;
+}
+
+// V2 NOVA RUSH UX: Quick Cash button - cashes out at 1.10× immediately
+function quickCash110(){
+  if(!G.novaTimer)return;
+  if(G.novaMult<1.10){
+    // Wait until we hit 1.10× then cashout
+    G.autoCashout=1.10;
+  }else{
+    cashout();
+  }
 }
 function tickNova(){
   G.novaMult=Math.round((G.novaMult+G.novaMult*.007+0.013)*100)/100;
@@ -724,11 +1104,59 @@ function drawNovaGraph(col){
 function cashout(){
   if(!G.novaTimer)return;
   clearInterval(G.novaTimer);G.novaTimer=null;
+  // V2 UX: record crash point for history bar (the actual bust mult)
+  G.crashHistory.push(G.novaBust);
+  if(G.crashHistory.length>20)G.crashHistory.shift();
   const win=G.novaStake*G.novaMult;G.balance+=win;updHUD();
+  // TRACKER: log NR cashout success
+  Tracker.logNovaRush({
+    source:G.novaSource||'base',
+    stake:G.novaStake,
+    cashout_at:G.novaMult,
+    crash_mult:G.novaBust,
+    cashout_target:G.autoCashout>1?G.autoCashout:null,
+    won:true,
+    payout:win
+  });
+  // TRACKER: if this is Mode B finale, also log Mode B bonus completion
+  if(G.novaSource==='mode_b_finale'){
+    Tracker.logModeB({
+      payout:win,
+      ended_by:'L5_NR_WIN',
+      max_level:5,
+      accumulated:G.mB?G.mB.accum:0,
+      busted:false,
+      nr_finale:{crash:G.novaBust,cashout_at:G.novaMult,won:true,multiplier:G.novaMult}
+    });
+  }
   showResult(win,true,G.novaMult,'NOVA RUSH');
 }
 function triggerBurst(){
   G.novaTimer=null;
+  // V2 UX: record crash point for history bar
+  G.crashHistory.push(G.novaBust);
+  if(G.crashHistory.length>20)G.crashHistory.shift();
+  // TRACKER: log NR bust
+  Tracker.logNovaRush({
+    source:G.novaSource||'base',
+    stake:G.novaStake,
+    cashout_at:null,
+    crash_mult:G.novaBust,
+    cashout_target:G.autoCashout>1?G.autoCashout:null,
+    won:false,
+    payout:0
+  });
+  // TRACKER: if this is Mode B finale bust, also log Mode B bonus completion
+  if(G.novaSource==='mode_b_finale'){
+    Tracker.logModeB({
+      payout:0,
+      ended_by:'L5_NR_BUST',
+      max_level:5,
+      accumulated:G.mB?G.mB.accum:0,
+      busted:false,
+      nr_finale:{crash:G.novaBust,cashout_at:null,won:false,multiplier:G.novaBust}
+    });
+  }
   const ns=$('s-nova');if(ns)ns.style.animation='burstFlash .6s ease';
   setTimeout(()=>showResult(0,false,G.novaBust,'NOVA RUSH'),650);
 }
@@ -743,16 +1171,16 @@ function showModeSelect(){
       <div class="mode-card" onclick="startModeA()">
         <div class="mc-icon" style="color:var(--blue);">🌀</div>
         <div class="mc-name">QUANTUM CASCADE</div>
-        <div class="mc-desc">Free spins sa Crash Pool-om. Pool raste sa dobitcima. Quantum Burst (8%) resetuje Pool na 1×.</div>
+        <div class="mc-desc">20s timer sa Pool-om do 2×. Quantum Burst (18%) reset pool + bonus nastavlja sa +2s. Garantovan payout!</div>
         <div class="mc-badge">BONUS MODE A</div>
-        <div style="margin-top:.4rem;font-size:.68rem;color:var(--dim);">RTP 96.5–97.5% | Max ~400×</div>
+        <div style="margin-top:.4rem;font-size:.68rem;color:var(--dim);">Avg ~30× ulog · Median 17× · Max ~200×</div>
       </div>
       <div class="mode-card" onclick="startModeB()">
         <div class="mc-icon" style="color:var(--gold);">🚀</div>
         <div class="mc-name">ASCEND PROTOCOL</div>
-        <div class="mc-desc">5 nivoa. Naplati ili napreduj. Rizik rušenja raste svakim nivoom. L5 = NOVA RUSH Finale.</div>
+        <div class="mc-desc">5 nivoa po 3 spina. Multipliers 1/1.5/2/3/5. Naplati ili napreduj. L5 = NOVA RUSH Finale.</div>
         <div class="mc-badge" style="background:rgba(255,209,102,.15);color:var(--gold);">BONUS MODE B</div>
-        <div style="margin-top:.4rem;font-size:.68rem;color:var(--dim);">RTP 95–98% | Max 2,000×</div>
+        <div style="margin-top:.4rem;font-size:.68rem;color:var(--dim);">Avg ~10× ulog · Max 2,000×</div>
       </div>
     </div>`;
 }
@@ -762,13 +1190,14 @@ function showModeSelect(){
 // across spins until Quantum Burst clears them. Pool grows visibly (decimal).
 function startModeA(){
   G.mA={
-    timeLeft:45,        // FIX: was 60s — reduced to balance excessive payouts
+    timeLeft:20,        // F5 BALANCE: 20s (was 25s in V2, 45s in V1)
     pool:1.0,           // crash pool multiplier (decimal)
     wins:0,             // accumulated wins
     stickyWilds:[],     // positions where wilds persist
     spinning:false,
     timerInterval:null,
-    ended:false
+    ended:false,
+    spinCount:0         // TRACKER: count spins this session
   };
   show('s-modeA');
   buildModeAUI();
@@ -784,7 +1213,7 @@ function buildModeAUI(){
         <div style="font-size:.6rem;color:var(--dim);letter-spacing:.1em;">TIME REMAINING</div>
         <div id="ma-time" style="font-size:1.1rem;font-weight:800;color:var(--gold);">${G.mA.timeLeft.toFixed(1)}s</div>
         <div style="margin-top:.25rem;background:rgba(255,255,255,.08);height:5px;border-radius:3px;overflow:hidden;">
-          <div id="ma-time-bar" style="height:100%;background:linear-gradient(90deg,#16D996,#FFD166);width:${(G.mA.timeLeft/45*100).toFixed(1)}%;transition:width .1s linear;"></div>
+          <div id="ma-time-bar" style="height:100%;background:linear-gradient(90deg,#16D996,#FFD166);width:${(G.mA.timeLeft/20*100).toFixed(1)}%;transition:width .1s linear;"></div>
         </div>
       </div>
       <div style="text-align:right;">
@@ -803,7 +1232,7 @@ function buildModeAUI(){
         <button class="btn-outline" id="ma-collect" onclick="collectModeA()">COLLECT ${fmt(G.mA.wins*G.mA.pool)}</button>
       </div>
       <div style="font-size:.62rem;color:var(--dim);text-align:center;margin-top:.4rem;letter-spacing:.05em;">
-        QUANTUM BURST 8% (+3s, RESET) · 3× SCATTER = +10s · WILDS LEPLJIVI (MAX 3)
+        QUANTUM BURST 18% (reset pool +2s) · 4× SCATTER = +8s · WILDS LEPLJIVI (MAX 2) · POOL CAP 2×
       </div>
     </div>`;
   // Initial grid (clean — no clusters)
@@ -833,13 +1262,14 @@ function startModeATimer(){
     if(te){
       te.textContent=G.mA.timeLeft.toFixed(1)+'s';
       // Color shift as time runs out
-      if(G.mA.timeLeft<10)te.style.color='var(--red)';
-      else if(G.mA.timeLeft<20)te.style.color='var(--gold)';
+      // F5: thresholds scaled for 20s base timer (was 25s)
+      if(G.mA.timeLeft<5)te.style.color='var(--red)';
+      else if(G.mA.timeLeft<10)te.style.color='var(--gold)';
     }
     const tb=$('ma-time-bar');
     if(tb){
-      tb.style.width=Math.min(100,G.mA.timeLeft/45*100)+'%';
-      if(G.mA.timeLeft<10)tb.style.background='linear-gradient(90deg,#EF476F,#FFD166)';
+      tb.style.width=Math.min(100,G.mA.timeLeft/20*100)+'%';
+      if(G.mA.timeLeft<5)tb.style.background='linear-gradient(90deg,#EF476F,#FFD166)';
     }
     if(G.mA.timeLeft<=0&&!G.mA.ended){
       G.mA.ended=true;
@@ -875,20 +1305,26 @@ async function spinModeA(){
   await delay(550);
   await delay(180);
 
-  // Quantum Burst check (8%) — resets pool, clears sticky wilds, adds time
-  if(Math.random()<0.08&&G.mA.wins>0){
+  // F5 BALANCE: Quantum Burst (18%) RESETS pool + clears stickies + adds 2s
+  // BONUS NASTAVLJA — industrijski standard, bonus uvek ide do kraja
+  // Median payout se duplo veći (sa 7× na 17×), avg payout ostaje sličan
+  if(Math.random()<0.18&&G.mA.wins>0){
     const pEl=$('ma-pool');
     if(pEl){pEl.style.animation='poolBurst .5s ease';pEl.textContent='BURST!';pEl.style.color='var(--red)';}
     await delay(900);
     G.mA.pool=1.0;
     G.mA.stickyWilds=[];
-    G.mA.timeLeft=Math.min(G.mA.timeLeft+3,60); // FIX: +3s, cap 60s (was 75s)
+    G.mA.timeLeft=Math.min(G.mA.timeLeft+2,60); // F5: +2s (was +3s in V1, V2 ended bonus)
     if(pEl){pEl.style.animation='';pEl.style.color='var(--blue)';pEl.textContent='1.0×';}
     updateModeAUI();
-    // Regenerate clean grid (no wilds)
+    // TRACKER: log QB event (not bonus end - bonus continues)
+    if(!G.mA.qbEvents)G.mA.qbEvents=0;
+    G.mA.qbEvents++;
+    // Regenerate clean grid (no wilds since they were cleared)
     G.grid=genCleanGrid();
     renderGrid(ge,G.grid,null,null,null);
     G.mA.spinning=false;
+    G.mA.spinCount++; // TRACKER: still counts as a spin (player used it)
     if(sBtn&&G.mA.timeLeft>0){sBtn.disabled=false;sBtn.style.opacity='1';}
     return;
   }
@@ -897,9 +1333,9 @@ async function spinModeA(){
   const w=await runCascades(1);
   if(w>0){
     G.mA.wins+=w;
-    // FIX: Pool grows visibly on every win (decimal)
-    G.mA.pool=Math.min(G.mA.pool+0.3,6.0);
-    if(w>G.bet)G.mA.pool=Math.min(G.mA.pool+0.4,6.0);
+    // F5: Pool grows slower, cap 2.0 (was V2: +0.15/+0.20, cap 3.0)
+    G.mA.pool=Math.min(G.mA.pool+0.13,2.0);
+    if(w>G.bet)G.mA.pool=Math.min(G.mA.pool+0.18,2.0);
   }
 
   // FIX: Re-apply sticky wilds after cascade — track if anything actually changed
@@ -909,9 +1345,9 @@ async function spinModeA(){
     if(p>=0&&p<30&&G.grid[p]!=='W'){G.grid[p]='W';wildsRestored=true;}
   });
 
-  // Track NEW wilds that appeared during this spin (cap at 6)
+  // V2: Sticky wild cap 2 (was 3) — reduces compound win effect
   for(let i=0;i<30;i++){
-    if(G.grid[i]==='W'&&!G.mA.stickyWilds.includes(i)&&G.mA.stickyWilds.length<3){
+    if(G.grid[i]==='W'&&!G.mA.stickyWilds.includes(i)&&G.mA.stickyWilds.length<2){
       G.mA.stickyWilds.push(i);
     }
   }
@@ -920,16 +1356,17 @@ async function spinModeA(){
   // (cascade-ended path already rendered the final state)
   if(wildsRestored)renderGrid(gridEl(),G.grid,null,null,null);
 
-  // Scatter check (3+ on final grid)
+  // Scatter check (4+ on final grid — V2 trigger threshold)
   const scatCnt=G.grid.filter(s=>s==='B').length;
-  if(scatCnt>=3){
-    G.mA.timeLeft=Math.min(G.mA.timeLeft+10,60); // FIX: +10s cap 60s (was +15s cap 75s)
+  if(scatCnt>=4){
+    G.mA.timeLeft=Math.min(G.mA.timeLeft+8,60); // V2: +8s (was +10s)
     const te=$('ma-time');
     if(te){te.style.animation='poolBurst .6s ease';setTimeout(()=>{if(te)te.style.animation='';},600);}
   }
 
   updateModeAUI();
   G.mA.spinning=false;
+  G.mA.spinCount++; // TRACKER
   if(sBtn&&G.mA.timeLeft>0){sBtn.disabled=false;sBtn.style.opacity='1';}
 }
 
@@ -946,6 +1383,15 @@ function collectModeA(){
   G.mA.ended=true;
   if(G.mA.timerInterval){clearInterval(G.mA.timerInterval);G.mA.timerInterval=null;}
   const win=G.mA.wins*G.mA.pool;G.balance+=win;
+  // TRACKER: log Mode A early collect (F5: bonus runs to completion, QB doesn't end it)
+  Tracker.logModeA({
+    payout:win,
+    ended_by:'COLLECT',
+    spins:G.mA.spinCount,
+    accumulated:G.mA.wins,
+    final_pool:G.mA.pool,
+    qb_events:G.mA.qbEvents||0
+  });
   showResult(win,true,G.mA.pool,'MODE A — Quantum Cascade');
 }
 
@@ -958,6 +1404,15 @@ function endModeA(){
   // Brief delay so player sees time ran out
   setTimeout(()=>{
     const win=G.mA.wins*G.mA.pool;G.balance+=win;
+    // TRACKER: log Mode A natural timer end (F5: this is now the only natural end besides COLLECT)
+    Tracker.logModeA({
+      payout:win,
+      ended_by:'TIMER',
+      spins:G.mA.spinCount,
+      accumulated:G.mA.wins,
+      final_pool:G.mA.pool,
+      qb_events:G.mA.qbEvents||0
+    });
     showResult(win,true,G.mA.pool,'MODE A — Quantum Cascade');
   },900);
 }
@@ -969,7 +1424,7 @@ function startModeB(){
   G.mB={
     level:1,
     accum:0,
-    spinsLeft:5,
+    spinsLeft:3,        // V2 BALANCE: 3 spinova (was 5) — kraći level, više fokusa
     busted:false,
     spinning:false,
     stickyWilds:[] // FIX: Sticky wilds reset per-level
@@ -1009,8 +1464,8 @@ function buildModeBFooterHTML(){
   const lvl=BLEVELS[G.mB.level];
   const isL5=G.mB.level===5;
   const allSpinsUsed=G.mB.spinsLeft===0;
-  const spinNum=5-G.mB.spinsLeft+1;
-  const perSpinRisk=G.mB.level>1?(lvl.risk/5).toFixed(1):0;
+  const spinNum=3-G.mB.spinsLeft+1;
+  const perSpinRisk=G.mB.level>1?(lvl.risk/3).toFixed(1):0;
 
   if(G.mB.busted){
     return `
@@ -1046,7 +1501,7 @@ function buildModeBFooterHTML(){
   const riskTxt=G.mB.level>1?` | Rizik per spin: <strong style="color:var(--red);">${perSpinRisk}%</strong>`:'';
   return `
     <div style="font-size:.7rem;color:var(--dim);margin-bottom:.4rem;text-align:center;">
-      Spin <strong style="color:var(--text);">${spinNum}/5</strong> | Level mult: <strong style="color:var(--blue);">×${lvl.mult}</strong>${riskTxt}
+      Spin <strong style="color:var(--text);">${spinNum}/3</strong> | Level mult: <strong style="color:var(--blue);">×${lvl.mult}</strong>${riskTxt}
     </div>
     <div class="ca-row">
       <button class="btn btn-spin" id="mb-spin" onclick="spinModeB()" style="min-width:140px;">SPIN</button>
@@ -1073,7 +1528,7 @@ async function spinModeB(){
 
   // FIX: Per-spin bust check at L2+ (risk distributed across 5 spins)
   if(G.mB.level>1){
-    const perSpinRisk=lvl.risk/5;
+    const perSpinRisk=lvl.risk/3;  // V2: 3 spins per level
     if(Math.random()*100<perSpinRisk){
       // BUST during this spin!
       G.mB.busted=true;
@@ -1130,7 +1585,8 @@ async function spinModeB(){
 
   // Track NEW wilds that appeared this spin (cap at 3 per level — matches Mode A)
   for(let i=0;i<30;i++){
-    if(G.grid[i]==='W'&&!G.mB.stickyWilds.includes(i)&&G.mB.stickyWilds.length<3){
+    // V2: Sticky wild cap 2 (was 3)
+    if(G.grid[i]==='W'&&!G.mB.stickyWilds.includes(i)&&G.mB.stickyWilds.length<2){
       G.mB.stickyWilds.push(i);
     }
   }
@@ -1145,6 +1601,15 @@ async function spinModeB(){
 
 function collectModeB(){
   const win=G.mB.accum;G.balance+=win;
+  // TRACKER: log Mode B end (collect or bust both go here)
+  Tracker.logModeB({
+    payout:win,
+    ended_by:G.mB.busted?('BUST_L'+G.mB.level):('COLLECT_L'+G.mB.level),
+    max_level:G.mB.level,
+    accumulated:G.mB.accum,
+    busted:G.mB.busted,
+    nr_finale:null
+  });
   showResult(win,true,BLEVELS[G.mB.level].mult,'MODE B · Level '+G.mB.level);
 }
 
@@ -1152,7 +1617,7 @@ function collectModeB(){
 async function ascendModeB(){
   if(G.mB.level>=5){launchModeBNova();return;}
   G.mB.level++;
-  G.mB.spinsLeft=5;
+  G.mB.spinsLeft=3;     // V2: 3 spinova po nivou
   G.mB.busted=false;
   G.mB.stickyWilds=[]; // FIX: Wilds reset on level transition
   G.grid=genCleanGrid(); // Fresh clean grid for new level
@@ -1163,9 +1628,11 @@ function launchModeBNova(){
   const stake=G.mB.accum;
   if(stake<0.01){collectModeB();return;}
   G.novaStake=stake;G.novaMult=1.0;G.novaHist=[1.0];G.autoCashout=0;
+  G.novaSource='mode_b_finale'; // TRACKER context
   const r=Math.random();
   const maxMult=Math.min(2000*G.bet/Math.max(stake,0.01),80);
-  G.novaBust=Math.min(Math.max(0.97/r,1.01),maxMult);
+  // V2: Mode B Level 5 finale uses same 98% RTP formula
+  G.novaBust=Math.min(Math.max(0.98/r,1.01),maxMult);
   show('s-nova');
   buildNovaScreen(`<div style="font-size:.65rem;color:var(--gold);">MAX: ${maxMult.toFixed(1)}×</div>`);
   G.novaTimer=setInterval(tickNova,85);
@@ -1197,7 +1664,7 @@ function showIntro(){
       <div class="logo-burst">BURST</div>
       <div style="color:var(--dim);letter-spacing:.15em;font-size:.85rem;margin:.7rem 0 1.2rem;">HYBRID CASCADE SLOT × CRASH GAMBLE</div>
       <div style="display:flex;gap:2rem;justify-content:center;margin:1.2rem 0;">
-        <div><div class="istat-val">96%</div><div class="istat-lbl">RTP</div></div>
+        <div><div class="istat-val">97%</div><div class="istat-lbl">RTP</div></div>
         <div><div class="istat-val">2,000×</div><div class="istat-lbl">MAX WIN</div></div>
         <div><div class="istat-val">6×5</div><div class="istat-lbl">GRID</div></div>
         <div><div class="istat-val">97%</div><div class="istat-lbl">NOVA RUSH</div></div>
@@ -1446,6 +1913,7 @@ function initApp(){
 }
 
 initApp();
+Tracker.init();
 </script>
 </body>
 </html>

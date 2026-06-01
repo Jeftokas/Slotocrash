@@ -66,6 +66,18 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .btn-spin{background:var(--blue);color:#030810;padding:.68rem 2.3rem;font-size:.95rem;}
 .btn-spin:hover{background:#22cbec;}
 .btn-spin:disabled{background:rgba(0,180,216,.25);color:rgba(3,8,16,.5);cursor:not-allowed;}
+/* V2.3: AUTO spin button — kompaktno ispod SPIN-a */
+.spin-stack{display:flex;flex-direction:column;align-items:center;gap:.32rem;}
+.btn-auto{background:rgba(8,15,30,.7);border:1px solid rgba(0,180,216,.32);
+  color:var(--blue);padding:.28rem .85rem;border-radius:6px;font-size:.62rem;
+  font-weight:700;letter-spacing:.08em;cursor:pointer;transition:all .15s;font-family:inherit;
+  display:inline-flex;align-items:center;gap:.25rem;}
+.btn-auto:hover{background:rgba(0,180,216,.15);border-color:rgba(0,180,216,.6);color:#22cbec;}
+.btn-auto:active{transform:scale(.95);}
+.btn-auto.is-running{background:rgba(230,57,70,.18);border-color:rgba(230,57,70,.55);color:#ff8090;}
+/* SPIN button changes when auto-running */
+.btn-spin.is-stopping{background:var(--red);color:#fff;}
+.btn-spin.is-stopping:hover{background:#ff3355;}
 .btn-green{background:var(--green);color:#021210;padding:.65rem 1.3rem;font-size:.88rem;}
 .btn-green:hover{background:#00f4b5;}
 .btn-red{background:var(--red);color:#fff;padding:.65rem 1.3rem;font-size:.88rem;}
@@ -336,6 +348,32 @@ button, .btn, .btn-pref, .btn-outline, .btn-coll, .btn-asc, .btn-cash,
 <body>
 <!-- VERSION BADGE — vizuelna potvrda verzije (V2.2 F5) -->
 <div style="position:fixed;top:6px;left:6px;z-index:9998;background:rgba(0,180,216,.18);border:1px solid rgba(0,180,216,.5);color:#00B4D8;padding:.18rem .42rem;border-radius:4px;font-size:.6rem;font-weight:700;letter-spacing:.05em;font-family:Arial,sans-serif;pointer-events:none;">V2.2-F5</div>
+
+<!-- V2.3: Auto Spin picker -->
+<div id="auto-picker" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9997;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px);">
+  <div style="background:linear-gradient(135deg,#0F1828,#1A2540);border:1px solid rgba(0,180,216,.5);border-radius:12px;max-width:340px;width:100%;padding:1.2rem;color:#e8eef5;font-family:Arial,sans-serif;animation:promptIn .25s ease;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+      <div style="font-size:.95rem;font-weight:800;color:#00B4D8;letter-spacing:.06em;">⟳ AUTO SPIN</div>
+      <button onclick="hideAutoPicker()" style="background:transparent;border:none;color:#888;font-size:1.3rem;cursor:pointer;padding:0 .3rem;line-height:1;">✕</button>
+    </div>
+    <div style="font-size:.7rem;color:#888;margin-bottom:.85rem;">Izaberi broj spinova. Auto-stop kod bonusa, prompta (ASK mode), ili nedovoljnog balansa.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.45rem;margin-bottom:.55rem;">
+      <button onclick="startAutoSpin(10)" style="padding:.65rem;background:rgba(0,180,216,.10);border:1px solid rgba(0,180,216,.35);color:#00B4D8;border-radius:6px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.85rem;">10</button>
+      <button onclick="startAutoSpin(25)" style="padding:.65rem;background:rgba(0,180,216,.10);border:1px solid rgba(0,180,216,.35);color:#00B4D8;border-radius:6px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.85rem;">25</button>
+      <button onclick="startAutoSpin(50)" style="padding:.65rem;background:rgba(0,180,216,.10);border:1px solid rgba(0,180,216,.35);color:#00B4D8;border-radius:6px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.85rem;">50</button>
+      <button onclick="startAutoSpin(100)" style="padding:.65rem;background:rgba(0,180,216,.18);border:1px solid rgba(0,180,216,.55);color:#00B4D8;border-radius:6px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.85rem;">100</button>
+      <button onclick="startAutoSpin(250)" style="padding:.65rem;background:rgba(0,180,216,.10);border:1px solid rgba(0,180,216,.35);color:#00B4D8;border-radius:6px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.85rem;">250</button>
+      <button onclick="startAutoSpin(500)" style="padding:.65rem;background:rgba(0,180,216,.10);border:1px solid rgba(0,180,216,.35);color:#00B4D8;border-radius:6px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.85rem;">500</button>
+    </div>
+    <div style="font-size:.6rem;color:#888;padding:.55rem;background:rgba(255,255,255,.03);border-radius:5px;line-height:1.4;">
+      <b style="color:#f4b942;">AUTO-STOP USLOVI:</b><br>
+      • Bonus trigger (4+ scatter) — ide u Mode select<br>
+      • ASK mode prompt — čeka odluku<br>
+      • Nedovoljan balans<br>
+      • Manual STOP (klikni SPIN ili AUTO ponovo)
+    </div>
+  </div>
+</div>
 <div id="app">
   <div class="screen" id="s-pin">
     <div class="pin-card">
@@ -450,6 +488,12 @@ const G={
     customMin:2.0,       // Donja granica CUSTOM opsega (× uloga)
     customMax:10.0,      // Gornja granica CUSTOM opsega (× uloga)
     autoCashoutMult:2.0  // Auto-cashout multiplier u AUTO modu
+  },
+  // V2.3: Auto Spin state
+  autoSpin:{
+    remaining:0,         // broj preostalih auto-spinova (0 = nije aktivan)
+    initial:0,           // ukupan broj kad je startovan (za UI display)
+    waiting:false        // true dok se NR/bonus resolves (sprečava double-trigger)
   }
 };
 
@@ -890,6 +934,107 @@ async function runCascades(levelMult){
 // ─── SPIN ─────────────────────────────────────────────────────────────────────
 function doSpin(){const b=$('nb-spin');if(b)b.click();}
 
+// ─── V2.3: AUTO SPIN ──────────────────────────────────────────────────────────
+// Handles both manual click and auto-spin "STOP" click via central dispatcher
+function handleSpinClick(){
+  if(G.autoSpin.remaining>0){
+    // Currently auto-spinning → STOP it
+    stopAutoSpin('manual');
+    return;
+  }
+  // Normal manual spin
+  spin();
+}
+
+// Show/hide auto picker
+function toggleAutoSpinPicker(evt){
+  if(evt&&evt.stopPropagation)evt.stopPropagation();
+  // If auto-spin is running, AUTO button stops it
+  if(G.autoSpin.remaining>0){
+    stopAutoSpin('manual');
+    return;
+  }
+  const m=$('auto-picker');
+  if(m){
+    m.style.display=m.style.display==='flex'?'none':'flex';
+  }
+}
+function hideAutoPicker(){
+  const m=$('auto-picker');if(m)m.style.display='none';
+}
+
+// Start auto-spin with given count
+function startAutoSpin(count){
+  if(G.balance<G.bet){
+    alert('Nedovoljan balans za auto spin. Resetuj demo iz gear menija.');
+    return;
+  }
+  hideAutoPicker();
+  G.autoSpin.remaining=count;
+  G.autoSpin.initial=count;
+  G.autoSpin.waiting=false;
+  updateAutoSpinUI();
+  // Kick off the first spin
+  if(!G.spinning){
+    spin();
+  }
+}
+
+// Stop auto-spin (manual or auto-stop reason)
+function stopAutoSpin(reason){
+  G.autoSpin.remaining=0;
+  G.autoSpin.initial=0;
+  G.autoSpin.waiting=false;
+  updateAutoSpinUI();
+}
+
+// Decrement and check if should continue
+function continueAutoSpinIfActive(){
+  if(G.autoSpin.remaining<=0)return false;
+  if(G.balance<G.bet){
+    stopAutoSpin('out_of_balance');
+    return false;
+  }
+  G.autoSpin.remaining--;
+  updateAutoSpinUI();
+  if(G.autoSpin.remaining>0){
+    // Schedule next spin
+    setTimeout(()=>{if(G.autoSpin.remaining>0&&!G.spinning)spin();},650);
+    return true;
+  }
+  // Counter reached 0 — natural stop
+  stopAutoSpin('counter_zero');
+  return false;
+}
+
+// Update UI to reflect auto-spin state
+function updateAutoSpinUI(){
+  const spinBtn=$('nb-spin');
+  const autoBtn=$('nb-auto');
+  const autoLbl=$('nb-auto-lbl');
+  if(!spinBtn||!autoBtn||!autoLbl)return;
+  if(G.autoSpin.remaining>0){
+    spinBtn.textContent=`STOP (${G.autoSpin.remaining})`;
+    spinBtn.classList.add('is-stopping');
+    autoBtn.classList.add('is-running');
+    autoLbl.textContent='STOP';
+  }else{
+    spinBtn.textContent='SPIN';
+    spinBtn.classList.remove('is-stopping');
+    autoBtn.classList.remove('is-running');
+    autoLbl.textContent='AUTO ▾';
+  }
+}
+
+// Close picker on outside click
+document.addEventListener('click',(e)=>{
+  const m=$('auto-picker');
+  if(!m||m.style.display!=='flex')return;
+  if(!m.contains(e.target)&&e.target.id!=='nb-auto'&&!e.target.closest('#nb-auto')){
+    hideAutoPicker();
+  }
+});
+
 async function spin(){
   if(G.spinning||G.balance<G.bet)return;
   G.spinning=true;
@@ -923,7 +1068,12 @@ async function spin(){
     triggered_bonus:G.scatCnt>=4,
     balance_after:G.balance+totalWin
   });
-  if(G.scatCnt>=4){G.spinning=false;await delay(400);showModeSelect();return;}
+  if(G.scatCnt>=4){
+    G.spinning=false;
+    // AUTO SPIN: bonus trigger STOPS auto-spin (player decides which mode)
+    if(G.autoSpin.remaining>0)stopAutoSpin('bonus_trigger');
+    await delay(400);showModeSelect();return;
+  }
   // FIX: Pre-set preferencije (sekcija 4.3 izveštaja) — routing po G.pref.mode
   if(totalWin>G.bet){
     updWin(totalWin);
@@ -933,15 +1083,20 @@ async function spin(){
       // Uvek naplati — bez prompta
       G.balance+=totalWin;updHUD();
       await delay(700);updWin(0);
-      G.spinning=false;if(sBtn)sBtn.disabled=false;return;
+      G.spinning=false;if(sBtn)sBtn.disabled=false;
+      // AUTO SPIN: COLLECT continues seamlessly
+      continueAutoSpinIfActive();
+      return;
     }
     if(pm==='LAUNCH'){
-      // Uvek lansiraj — bez auto-cashout
+      // Uvek lansiraj — bez auto-cashout. Auto-spin pauses do NR resolve.
+      if(G.autoSpin.remaining>0)G.autoSpin.waiting=true;
       startNova(totalWin,0);
       G.spinning=false;return;
     }
     if(pm==='AUTO'){
       // Uvek lansiraj + auto-cashout na pre-set multiplikatoru
+      if(G.autoSpin.remaining>0)G.autoSpin.waiting=true;
       startNova(totalWin,G.pref.autoCashoutMult);
       G.spinning=false;return;
     }
@@ -949,20 +1104,28 @@ async function spin(){
       // Lansiraj samo ako je dobitak u opsegu min×..max×
       const winMult=totalWin/G.bet;
       if(winMult>=G.pref.customMin&&winMult<=G.pref.customMax){
+        if(G.autoSpin.remaining>0)G.autoSpin.waiting=true;
         startNova(totalWin,0);
         G.spinning=false;return;
       }
       // Izvan opsega → naplati
       G.balance+=totalWin;updHUD();
       await delay(700);updWin(0);
-      G.spinning=false;if(sBtn)sBtn.disabled=false;return;
+      G.spinning=false;if(sBtn)sBtn.disabled=false;
+      // AUTO SPIN: CUSTOM bez NR continues
+      continueAutoSpinIfActive();
+      return;
     }
     // ASK (default) — pokaži prompt sa 8s tajmerom
+    // AUTO SPIN: ASK prompt STOPS auto-spin (player decides)
+    if(G.autoSpin.remaining>0)stopAutoSpin('ask_prompt');
     showPrompt(totalWin);G.spinning=false;return;
   }
   if(totalWin>0){G.balance+=totalWin;updHUD();updWin(totalWin);await delay(500);updWin(0);}
   G.spinning=false;
   if(sBtn)sBtn.disabled=false;
+  // AUTO SPIN: zero/small win — continue
+  continueAutoSpinIfActive();
 }
 
 function updHUD(){const b=$('hud-bal');if(b)b.textContent=fmt(G.balance);}
@@ -972,12 +1135,15 @@ function updScatPips(){for(let i=0;i<3;i++){const p=$('sp'+i);if(p)p.classList.t
 // ─── WIN PROMPT ───────────────────────────────────────────────────────────────
 function showPrompt(amount){
   const mult=(amount/G.bet).toFixed(1);
+  // V2.3: Cashout zones info IN the prompt (was only shown during NR play — too fast to read)
+  const zonesPreview=buildPromptZonesHTML();
   $('s-prompt').innerHTML=`
     <div class="pbg"></div>
     <div class="pcard">
       <div class="ptitle">WIN DETECTED — NOVA RUSH?</div>
       <div class="pamt">${fmt(amount)}</div>
       <div class="pmult">${mult}× tvoj ulog</div>
+      ${zonesPreview}
       <div class="pbtns">
         <button class="btn btn-green" onclick="collectWin(${amount})">NAPLATI ${fmt(amount)}</button>
         <button class="btn btn-red" onclick="launchNova(${amount})">NOVA RUSH ›</button>
@@ -989,6 +1155,26 @@ function showPrompt(amount){
   let t=8;
   const ti=setInterval(()=>{t--;const el=$('pt-cnt');if(el)el.textContent=t;if(t<=0){clearInterval(ti);collectWin(amount);}},1000);
   G._ptimer=ti;
+}
+
+// V2.3: Cashout zones preview za pre-NR prompt (kompaktnija verzija)
+function buildPromptZonesHTML(){
+  const zones=[
+    {mult:1.1,  pct:'89%', col:'#5cdb95'},
+    {mult:1.5,  pct:'65%', col:'#16D996'},
+    {mult:2.0,  pct:'49%', col:'#f4b942'},
+    {mult:5.0,  pct:'20%', col:'#FF7B5C'},
+    {mult:10.0, pct:'10%', col:'#e63946'}
+  ];
+  const items=zones.map(z=>`
+    <div style="text-align:center;flex:1;">
+      <div style="font-size:.75rem;font-weight:800;color:${z.col};">${z.mult.toFixed(2)}×</div>
+      <div style="font-size:.55rem;color:var(--dim);margin-top:.1rem;">${z.pct}</div>
+    </div>`).join('');
+  return `<div style="margin:0 0 1rem 0;padding:.55rem .4rem;background:rgba(0,180,216,.06);border:1px solid rgba(0,180,216,.18);border-radius:8px;">
+    <div style="font-size:.55rem;color:var(--blue);letter-spacing:.1em;text-align:center;margin-bottom:.35rem;">CASHOUT ZONE — VEROVATNOĆA USPEHA</div>
+    <div style="display:flex;justify-content:space-between;gap:.2rem;">${items}</div>
+  </div>`;
 }
 function collectWin(amt){
   clearInterval(G._ptimer);G.balance+=amt;updHUD();
@@ -1667,6 +1853,9 @@ function launchModeBNova(){
 // ─── RESULT ───────────────────────────────────────────────────────────────────
 function showResult(amount,win,mult,src){
   show('s-result');
+  // V2.3: Auto-spin continuation logic
+  // If autoSpin was waiting for NR resolve, show countdown and auto-continue
+  const isAutoSpinning=G.autoSpin.remaining>0&&G.autoSpin.waiting;
   $('s-result').innerHTML=`
     <div style="font-size:.7rem;letter-spacing:.15em;color:${win?'var(--green)':'var(--red)'};">${win?'CASHOUT SUCCESS':'NOVA BURST'}</div>
     <div style="font-size:3.5rem;font-weight:900;margin:.3rem 0;color:${win?'var(--gold)':'var(--dim)'};">${win?fmt(amount):'€0.00'}</div>
@@ -1674,10 +1863,39 @@ function showResult(amount,win,mult,src){
     ${src?`<div style="font-size:.7rem;color:var(--blue);letter-spacing:.1em;margin:.3rem 0;">${src}</div>`:''}
     <div style="font-size:.82rem;color:var(--dim);max-width:260px;margin:.6rem 0;">${win?'Dobitci dodani na balans.':'Iznos lansiran u NOVA RUSH izgubljen.'}</div>
     <div style="display:flex;gap:.7rem;margin-top:1.2rem;">
-      <button class="btn btn-spin" onclick="showGame();setTimeout(()=>{G.spinning=false;const b=$('nb-spin');if(b)b.disabled=false;},100)">NASTAVI DEMO</button>
-      <button class="btn-outline" onclick="G.scatCnt=3;showModeSelect()">BONUS PONOVO</button>
+      <button class="btn btn-spin" onclick="continueFromResult()">NASTAVI DEMO</button>
+      <button class="btn-outline" onclick="if(G.autoSpin.remaining>0)stopAutoSpin('manual');G.scatCnt=3;showModeSelect()">BONUS PONOVO</button>
     </div>
+    ${isAutoSpinning?`<div id="auto-cont-msg" style="margin-top:.8rem;font-size:.72rem;color:var(--blue);letter-spacing:.05em;">⟳ Auto-nastavak za <span id="auto-cont-cnt">2</span>s · <span style="color:var(--gold);cursor:pointer;text-decoration:underline;" onclick="if(G.autoSpin.remaining>0)stopAutoSpin('manual');">STOP</span></div>`:''}
     <div style="font-size:.78rem;color:var(--dim);margin-top:.9rem;">Balans: <strong style="color:var(--text);">${fmt(G.balance)}</strong></div>`;
+
+  // V2.3: If auto-spin is active and was waiting for NR, schedule auto-continue
+  if(isAutoSpinning){
+    G.autoSpin.waiting=false;
+    let cnt=2;
+    G._autoContTimer=setInterval(()=>{
+      // If user pressed STOP manually, abort
+      if(G.autoSpin.remaining<=0){clearInterval(G._autoContTimer);return;}
+      cnt--;
+      const el=$('auto-cont-cnt');if(el)el.textContent=cnt;
+      if(cnt<=0){
+        clearInterval(G._autoContTimer);
+        continueFromResult();
+      }
+    },1000);
+  }
+}
+
+// V2.3: Centralized NASTAVI DEMO handler — clears auto-continue timer + advances
+function continueFromResult(){
+  if(G._autoContTimer){clearInterval(G._autoContTimer);G._autoContTimer=null;}
+  showGame();
+  setTimeout(()=>{
+    G.spinning=false;
+    const b=$('nb-spin');if(b)b.disabled=false;
+    // Continue auto-spin if active
+    continueAutoSpinIfActive();
+  },100);
 }
 
 // ─── INTRO ────────────────────────────────────────────────────────────────────
@@ -1735,17 +1953,22 @@ function showGame(preserveGrid){
         <div class="bet-disp" id="bet-d">${fmt(G.bet)}</div>
         <button class="bbet" onclick="if(G.bet<50){G.bet=Math.round((G.bet+.2)*10)/10;$('bet-d').textContent=fmt(G.bet);}">+</button>
       </div>
-      <button class="btn btn-spin" id="nb-spin" onclick="spin()">SPIN</button>
+      <div class="spin-stack">
+        <button class="btn btn-spin" id="nb-spin" onclick="handleSpinClick()">SPIN</button>
+        <button class="btn-auto" id="nb-auto" onclick="toggleAutoSpinPicker(event)" title="Auto spin"><span id="nb-auto-lbl">AUTO ▾</span></button>
+      </div>
       <button class="dp-toggle" id="dp-toggle-btn" onclick="toggleDP()" title="Demo controls" aria-label="Demo controls">⚙</button>
       <div style="display:flex;flex-direction:column;gap:.3rem;align-items:flex-end;">
         <button class="btn-pref" id="pref-btn" onclick="showPrefs()" title="NOVA RUSH popup pre-set">${prefBtnLabel()}</button>
-        <button class="btn-outline" onclick="showIntro()" style="padding:.3rem .7rem;font-size:.7rem;">← NAZAD</button>
+        <button class="btn-outline" onclick="if(G.autoSpin.remaining>0)stopAutoSpin('back');showIntro()" style="padding:.3rem .7rem;font-size:.7rem;">← NAZAD</button>
       </div>
     </div>`;
   // FIX: preserveGrid=true keeps the post-spin state (used after winning collect)
   // so the player sees the winning grid until they spin again.
   if(!preserveGrid)G.grid=genCleanGrid();
   renderGrid(gridEl(),G.grid,null,null,null);
+  // V2.3: Restore auto-spin UI if it's still active (e.g. after NR resolve)
+  updateAutoSpinUI();
   // Demo panel se sada otvara klikom na ⚙ gear (u controls), ne pokazuje se automatski
 }
 
@@ -1841,6 +2064,8 @@ function closePrefs(){
 // ─── DEMO HELPERS ─────────────────────────────────────────────────────────────
 function resetDemo(){
   clearInterval(G.novaTimer);G.novaTimer=null;
+  if(G._autoContTimer){clearInterval(G._autoContTimer);G._autoContTimer=null;}
+  if(G.autoSpin.remaining>0)stopAutoSpin('reset');
   G.balance=1000;G.bet=1;G.spinning=false;
   toggleDP(false); // zatvori panel ako je otvoren
   showIntro();

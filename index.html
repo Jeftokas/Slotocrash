@@ -608,25 +608,62 @@ const Tracker={
     this.save();
   },
 
-  // Compute summary stats
+  // Compute summary stats — V2.3 Sequential Wagers model
+  //
+  // Three RTP metrics tracked separately (best-practice za hibridne igre):
+  //
+  // 1. SLOT RTP  = (base_wins + bonus_payouts) / total_bets
+  //    Pure slot math, neovisno od igračevih NR odluka.
+  //    Šta dobijaš za €1 ulog u slot mehaniku (bilo gde da ode dalje).
+  //
+  // 2. CRASH RTP = nr_payouts / nr_stakes
+  //    Pure NR math, posmatra svaki NR launch kao nezavisan wager event.
+  //    Validira da je crash sertifikat 98% RTP fer.
+  //
+  // 3. PLAYER TOTAL RTP = (base + bonus + nr_net) / total_bets
+  //    Šta se realno desi sa igračevim novcem.
+  //    Identično prethodnom "rtp" metriku.
   summary(){
     const spins=this.data.spins;
     const bonuses=this.data.bonuses;
-    const nrs=this.data.nova_rushes.filter(nr=>nr.source==='base'); // exclude Mode B finale
+    const allNRs=this.data.nova_rushes;
+    const baseOnlyNRs=allNRs.filter(nr=>nr.source==='base'); // za stari nr_count
     const n=spins.length;
     if(n===0)return {total_spins:0};
 
     const totalWagered=spins.reduce((a,s)=>a+s.bet,0);
     const baseTotal=spins.reduce((a,s)=>a+s.win,0);
     const bonusTotal=bonuses.reduce((a,b)=>a+b.payout,0);
-    const nrNet=nrs.reduce((a,nr)=>a+nr.net,0);
+    const nrNet=baseOnlyNRs.reduce((a,nr)=>a+nr.net,0);
     const totalReturn=baseTotal+bonusTotal+nrNet;
+
+    // V2.3 Sequential Wagers metrics
+    // Slot component: stand-alone slot RTP (base + bonus, regardless of NR usage)
+    const slotWagered=totalWagered;
+    const slotReturn=baseTotal+bonusTotal;
+    const slotRtp=slotWagered>0?(slotReturn/slotWagered):0;
+
+    // Crash component: stand-alone NR RTP (every NR launch = independent wager event)
+    // Include both base NRs and Mode B finale NRs (same crash mechanic)
+    const crashWagered=allNRs.reduce((a,nr)=>a+nr.stake,0);
+    const crashReturn=allNRs.reduce((a,nr)=>a+(nr.won?nr.payout:0),0);
+    const crashRtp=crashWagered>0?(crashReturn/crashWagered):null;
 
     return {
       total_spins:n,
       total_wagered:totalWagered.toFixed(2),
       total_return:totalReturn.toFixed(2),
       net:(totalReturn-totalWagered).toFixed(2),
+      // V2.3: Sequential Wagers RTP decomposition
+      slot_rtp:slotWagered>0?((slotRtp)*100).toFixed(2)+'%':'—',
+      slot_wagered:slotWagered.toFixed(2),
+      slot_return:slotReturn.toFixed(2),
+      crash_rtp:crashRtp!==null?((crashRtp)*100).toFixed(2)+'%':'—',
+      crash_wagered:crashWagered.toFixed(2),
+      crash_return:crashReturn.toFixed(2),
+      crash_events:allNRs.length,
+      player_total_rtp:totalWagered>0?((totalReturn/totalWagered)*100).toFixed(2)+'%':'—',
+      // Legacy / backward compat
       rtp:totalWagered>0?((totalReturn/totalWagered)*100).toFixed(2)+'%':'—',
       hit_rate:((spins.filter(s=>s.win>0).length/n)*100).toFixed(2)+'%',
       base_rtp:((baseTotal/totalWagered)*100).toFixed(2)+'%',
@@ -635,9 +672,9 @@ const Tracker={
       bonus_count:bonuses.length,
       bonus_a:bonuses.filter(b=>b.mode==='A').length,
       bonus_b:bonuses.filter(b=>b.mode==='B').length,
-      nr_count:nrs.length,
-      nr_wins:nrs.filter(nr=>nr.won).length,
-      nr_losses:nrs.filter(nr=>!nr.won).length,
+      nr_count:baseOnlyNRs.length,
+      nr_wins:baseOnlyNRs.filter(nr=>nr.won).length,
+      nr_losses:baseOnlyNRs.filter(nr=>!nr.won).length,
       duration_min:Math.round((Date.now()-new Date(this.data.started_at).getTime())/60000)
     };
   },
@@ -738,6 +775,16 @@ function renderStatsContent(){
   }
 
   const netColor=parseFloat(s.net)>=0?'#5cdb95':'#e63946';
+  // V2.3: Sequential Wagers RTP color logic
+  const slotRtpNum=parseFloat(s.slot_rtp);
+  const crashRtpNum=parseFloat(s.crash_rtp);
+  const playerRtpNum=parseFloat(s.player_total_rtp);
+  const rtpColor=(v)=>{
+    if(isNaN(v))return '#888';
+    if(v>=95&&v<=103)return '#5cdb95'; // within expected range
+    if(v>=85&&v<=115)return '#f4b942'; // moderate variance
+    return '#FF7B5C'; // high variance
+  };
   c.innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.8rem;">
       <div style="background:rgba(0,180,216,.08);padding:.6rem;border-radius:6px;border:1px solid rgba(0,180,216,.2);">
@@ -749,6 +796,44 @@ function renderStatsContent(){
         <div style="font-size:1.4rem;font-weight:800;color:#00B4D8;">${s.duration_min}</div>
       </div>
     </div>
+
+    <!-- V2.3: Sequential Wagers RTP decomposition -->
+    <div style="background:linear-gradient(135deg,rgba(0,180,216,.07),rgba(244,185,66,.05));padding:.7rem .6rem;border-radius:8px;margin-bottom:.7rem;border:1px solid rgba(0,180,216,.18);">
+      <div style="font-size:.6rem;color:#00B4D8;letter-spacing:.12em;text-align:center;margin-bottom:.6rem;font-weight:700;">RTP DEKOMPOZICIJA — SEQUENTIAL WAGERS MODEL</div>
+      <div style="display:grid;grid-template-columns:1fr;gap:.32rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .55rem;background:rgba(0,180,216,.08);border-left:3px solid #00B4D8;border-radius:5px;">
+          <div>
+            <div style="font-size:.7rem;font-weight:700;color:#e8eef5;">🎰 SLOT RTP</div>
+            <div style="font-size:.55rem;color:#888;">(base + bonus) / wagered · cilj ~99%</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:1.1rem;font-weight:800;color:${rtpColor(slotRtpNum)};">${s.slot_rtp}</div>
+            <div style="font-size:.55rem;color:#888;">€${s.slot_return} / €${s.slot_wagered}</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .55rem;background:rgba(244,185,66,.08);border-left:3px solid #f4b942;border-radius:5px;">
+          <div>
+            <div style="font-size:.7rem;font-weight:700;color:#e8eef5;">💥 CRASH RTP</div>
+            <div style="font-size:.55rem;color:#888;">NR payouts / NR stakes · cilj 98%</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:1.1rem;font-weight:800;color:${rtpColor(crashRtpNum)};">${s.crash_rtp}</div>
+            <div style="font-size:.55rem;color:#888;">${s.crash_events>0?'€'+s.crash_return+' / €'+s.crash_wagered:'(nema NR-a)'}</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .55rem;background:rgba(92,219,149,.08);border-left:3px solid #5cdb95;border-radius:5px;">
+          <div>
+            <div style="font-size:.7rem;font-weight:700;color:#e8eef5;">👤 PLAYER TOTAL RTP</div>
+            <div style="font-size:.55rem;color:#888;">stvarni bankroll outcome igrača</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:1.1rem;font-weight:800;color:${rtpColor(playerRtpNum)};">${s.player_total_rtp}</div>
+            <div style="font-size:.55rem;color:#888;">€${s.total_return} / €${s.total_wagered}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.8rem;">
       <div style="background:rgba(255,255,255,.04);padding:.55rem;border-radius:6px;">
         <div style="font-size:.55rem;color:#888;letter-spacing:.08em;">WAGERED</div>
@@ -763,15 +848,14 @@ function renderStatsContent(){
         <div style="font-size:1rem;font-weight:700;color:${netColor};">${parseFloat(s.net)>=0?'+':''}€${s.net}</div>
       </div>
       <div style="background:rgba(255,255,255,.04);padding:.55rem;border-radius:6px;">
-        <div style="font-size:.55rem;color:#888;letter-spacing:.08em;">RTP</div>
-        <div style="font-size:1rem;font-weight:700;color:#f4b942;">${s.rtp}</div>
+        <div style="font-size:.55rem;color:#888;letter-spacing:.08em;">HIT RATE</div>
+        <div style="font-size:1rem;font-weight:700;color:#f4b942;">${s.hit_rate}</div>
       </div>
     </div>
     <div style="background:rgba(255,255,255,.03);padding:.6rem;border-radius:6px;margin-bottom:.6rem;font-size:.75rem;">
-      <div style="display:flex;justify-content:space-between;padding:.18rem 0;"><span style="color:#888;">Hit rate:</span><span><b>${s.hit_rate}</b></span></div>
       <div style="display:flex;justify-content:space-between;padding:.18rem 0;"><span style="color:#888;">Base contrib:</span><span>${s.base_rtp}</span></div>
       <div style="display:flex;justify-content:space-between;padding:.18rem 0;"><span style="color:#888;">Bonus contrib:</span><span>${s.bonus_contrib}</span></div>
-      <div style="display:flex;justify-content:space-between;padding:.18rem 0;"><span style="color:#888;">NOVA RUSH adj:</span><span>${s.nr_contrib}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.18rem 0;"><span style="color:#888;">NOVA RUSH net effect:</span><span>${s.nr_contrib}</span></div>
     </div>
     <div style="background:rgba(255,255,255,.03);padding:.6rem;border-radius:6px;margin-bottom:.6rem;font-size:.75rem;">
       <div style="display:flex;justify-content:space-between;padding:.18rem 0;"><span style="color:#888;">Bonusi (A / B):</span><span><b>${s.bonus_a}</b> / <b>${s.bonus_b}</b></span></div>
@@ -1907,14 +1991,28 @@ function showIntro(){
       <div class="logo-nova">NOVA</div>
       <div class="logo-burst">BURST</div>
       <div style="color:var(--dim);letter-spacing:.15em;font-size:.85rem;margin:.7rem 0 1.2rem;">HYBRID CASCADE SLOT × CRASH GAMBLE</div>
-      <div style="display:flex;gap:2rem;justify-content:center;margin:1.2rem 0;">
-        <div><div class="istat-val">97%</div><div class="istat-lbl">RTP</div></div>
+      <!-- V2.3: Sequential Wagers RTP — slot i crash kao zasebne komponente -->
+      <div style="display:flex;gap:1.4rem;justify-content:center;margin:1.2rem 0;flex-wrap:wrap;">
+        <div style="position:relative;">
+          <div class="istat-val" style="color:#5cdb95;">98.9%</div>
+          <div class="istat-lbl">SLOT RTP</div>
+          <div style="position:absolute;top:-6px;right:-10px;background:rgba(92,219,149,.18);color:#5cdb95;font-size:.5rem;padding:.06rem .25rem;border-radius:3px;font-weight:700;letter-spacing:.05em;">BASE</div>
+        </div>
+        <div style="position:relative;">
+          <div class="istat-val" style="color:#f4b942;">98%</div>
+          <div class="istat-lbl">CRASH RTP</div>
+          <div style="position:absolute;top:-6px;right:-10px;background:rgba(244,185,66,.18);color:#f4b942;font-size:.5rem;padding:.06rem .25rem;border-radius:3px;font-weight:700;letter-spacing:.05em;">NR</div>
+        </div>
         <div><div class="istat-val">2,000×</div><div class="istat-lbl">MAX WIN</div></div>
         <div><div class="istat-val">6×5</div><div class="istat-lbl">GRID</div></div>
-        <div><div class="istat-val">98%</div><div class="istat-lbl">NOVA RUSH</div></div>
+      </div>
+      <!-- V2.3: Sequential Wagers info — kratko obrazloženje -->
+      <div style="max-width:440px;margin:0 auto 1.1rem;padding:.55rem .8rem;background:rgba(0,180,216,.06);border:1px solid rgba(0,180,216,.18);border-radius:7px;font-size:.62rem;color:var(--dim);line-height:1.5;letter-spacing:.02em;">
+        <span style="color:#5cdb95;font-weight:700;">SLOT</span> i <span style="color:#f4b942;font-weight:700;">CRASH</span> komponente imaju nezavisne RTP-ove.
+        Slot dobitak je tvoj — možeš ga naplatiti ili rizikovati u nezavisnoj Nova Rush igri.
       </div>
       <button class="btn btn-spin" style="font-size:1.05rem;padding:.85rem 2.8rem;" onclick="showGame()">POKRENITE DEMO</button>
-      <div style="margin-top:.9rem;font-size:.65rem;color:rgba(142,172,192,.4);letter-spacing:.1em;">INVESTOR DEMO v2.2 · POVERLJIVO</div>
+      <div style="margin-top:.9rem;font-size:.65rem;color:rgba(142,172,192,.4);letter-spacing:.1em;">INVESTOR DEMO v2.3 · POVERLJIVO</div>
     </div>`;
   // Stars
   const bg=$('star-bg');if(!bg)return;

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<!-- Cache-busting: forsira browser da uvek povuče svežu kopiju -->
+<!-- Cache-busting: force browser to always fetch fresh copy -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -83,7 +83,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .btn-spin{background:var(--blue);color:#030810;padding:.68rem 2.3rem;font-size:.95rem;}
 .btn-spin:hover{background:#22cbec;}
 .btn-spin:disabled{background:rgba(0,180,216,.25);color:rgba(3,8,16,.5);cursor:not-allowed;}
-/* V2.3: AUTO spin button — kompaktno ispod SPIN-a */
+/* V2.3: AUTO spin button — compact, below SPIN */
 .spin-stack{display:flex;flex-direction:column;align-items:center;gap:.32rem;}
 .btn-auto{background:rgba(8,15,30,.7);border:1px solid rgba(0,180,216,.32);
   color:var(--blue);padding:.28rem .85rem;border-radius:6px;font-size:.62rem;
@@ -103,7 +103,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   padding:.45rem .9rem;font-size:.78rem;border-radius:7px;cursor:pointer;transition:all .15s;}
 .btn-outline:hover{border-color:var(--blue);color:var(--text);}
 
-/* Pre-set NOVA RUSH preference (sekcija 4.3) */
+/* Pre-set NOVA RUSH preference (section 4.3) */
 .btn-pref{background:rgba(8,15,30,.7);border:1px solid rgba(0,180,216,.3);
   color:var(--text);padding:.35rem .75rem;border-radius:8px;font-size:.68rem;
   letter-spacing:.04em;cursor:pointer;transition:all .15s;font-weight:600;}
@@ -282,9 +282,9 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 /* ─── MOBILE RESPONSIVE ─────────────────────────────────────────── */
 @media (max-width: 600px) {
-  /* Demo control panel je sada gear-button u game controls */
+  /* Demo control panel is now a gear-button in game controls */
 
-  /* HUD spušten i veći — safe-area podrška za iPhone notch + bolja vidljivost */
+  /* HUD lowered and larger — safe-area support for iPhone notch + better visibility */
   .hud {
     padding: .8rem .9rem;
     padding-top: max(.95rem, calc(env(safe-area-inset-top, 0px) + .35rem));
@@ -293,18 +293,18 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   .hud-lbl { font-size: .62rem; }
   .scat-pip { width: 10px; height: 10px; }
 
-  /* Bottom safe-area za controls (Safari donji toolbar + home indicator na iPhone X+) */
+  /* Bottom safe-area for controls (Safari bottom toolbar + home indicator on iPhone X+) */
   .controls, .ma-ftr, .mb-ftr {
     padding-bottom: max(1.1rem, calc(env(safe-area-inset-bottom, 0px) + .75rem));
   }
 
-  /* Game controls kompaktniji */
+  /* Game controls more compact */
   .controls { padding-left: .5rem; padding-right: .5rem; gap: .35rem; }
   .btn-spin { padding: .55rem 1.1rem; font-size: .8rem; }
   .bet-disp { min-width: 42px; font-size: .78rem; }
   .bbet { width: 26px; height: 26px; font-size: .82rem; }
 
-  /* Gear button manji na mobile da stane u controls red */
+  /* Gear button smaller on mobile to fit in controls row */
   .dp-toggle { width: 36px; height: 36px; font-size: 1.05rem; }
 
   /* Mode select cards */
@@ -373,7 +373,7 @@ button, .btn, .btn-pref, .btn-outline, .btn-coll, .btn-asc, .btn-cash,
       <div style="font-size:.95rem;font-weight:800;color:#00B4D8;letter-spacing:.06em;">⟳ AUTO SPIN</div>
       <button onclick="hideAutoPicker()" style="background:transparent;border:none;color:#888;font-size:1.3rem;cursor:pointer;padding:0 .3rem;line-height:1;">✕</button>
     </div>
-    <div style="font-size:.7rem;color:#888;margin-bottom:.85rem;">Izaberi broj spinova. Auto-stop kod bonusa, prompta (ASK mode), ili nedovoljnog balansa.</div>
+    <div style="font-size:.7rem;color:#888;margin-bottom:.85rem;">Choose spin count. Auto-stop on bonus, prompt (ASK mode), or insufficient balance.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.45rem;margin-bottom:.55rem;">
       <button onclick="startAutoSpin(10)" style="padding:.65rem;background:rgba(0,180,216,.10);border:1px solid rgba(0,180,216,.35);color:#00B4D8;border-radius:6px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.85rem;">10</button>
       <button onclick="startAutoSpin(25)" style="padding:.65rem;background:rgba(0,180,216,.10);border:1px solid rgba(0,180,216,.35);color:#00B4D8;border-radius:6px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.85rem;">25</button>
@@ -383,11 +383,11 @@ button, .btn, .btn-pref, .btn-outline, .btn-coll, .btn-asc, .btn-cash,
       <button onclick="startAutoSpin(500)" style="padding:.65rem;background:rgba(0,180,216,.10);border:1px solid rgba(0,180,216,.35);color:#00B4D8;border-radius:6px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.85rem;">500</button>
     </div>
     <div style="font-size:.6rem;color:#888;padding:.55rem;background:rgba(255,255,255,.03);border-radius:5px;line-height:1.4;">
-      <b style="color:#f4b942;">AUTO-STOP USLOVI:</b><br>
-      • Bonus trigger (4+ scatter) — ide u Mode select<br>
-      • ASK mode prompt — čeka odluku<br>
-      • Nedovoljan balans<br>
-      • Manual STOP (klikni SPIN ili AUTO ponovo)
+      <b style="color:#f4b942;">AUTO-STOP CONDITIONS:</b><br>
+      • Bonus trigger (4+ scatter) — opens Mode select<br>
+      • ASK mode prompt — waits for decision<br>
+      • Insufficient balance<br>
+      • Manual STOP (click SPIN or AUTO again)
     </div>
   </div>
 </div>
@@ -396,15 +396,15 @@ button, .btn, .btn-pref, .btn-outline, .btn-coll, .btn-asc, .btn-cash,
     <div class="pin-card">
       <div class="pin-logo">NOVA <span>BURST</span></div>
       <div class="pin-tag">CONFIDENTIAL DEMO · V1.0</div>
-      <div class="pin-msg">Unesite 4-cifreni PIN za pristup demo verziji</div>
+      <div class="pin-msg">Enter 4-digit PIN to access the demo</div>
       <input type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4"
              id="pin-input" class="pin-input" autocomplete="off"
              onkeyup="if(event.key==='Enter')checkPin();"
              oninput="this.value=this.value.replace(/[^0-9]/g,'');if(this.value.length===4)setTimeout(checkPin,120);"
              placeholder="••••"/>
-      <button class="btn btn-spin pin-btn" onclick="checkPin()">PRISTUPI ›</button>
+      <button class="btn btn-spin pin-btn" onclick="checkPin()">ACCESS ›</button>
       <div class="pin-err" id="pin-err">&nbsp;</div>
-      <div class="pin-foot">© 2026 NOVA BURST · Neovlašćeni pristup je zabranjen</div>
+      <div class="pin-foot">© 2026 NOVA BURST · Unauthorized access prohibited</div>
     </div>
   </div>
   <div class="screen hidden" id="s-intro"></div>
@@ -426,9 +426,9 @@ button, .btn, .btn-pref, .btn-outline, .btn-coll, .btn-asc, .btn-cash,
     <button class="dp-btn" onclick="G.scatCnt=3;showModeSelect();setTimeout(startModeB,120)">▶ Demo Mode B</button>
     <button class="dp-btn" onclick="resetDemo()">↺ Reset Demo</button>
     <div class="dp-t" style="margin-top:.8rem;">SESSION TRACKER</div>
-    <button class="dp-btn" onclick="showStatsModal()" style="background:rgba(92,219,149,.10);border-color:rgba(92,219,149,.4);color:#5cdb95;">📊 VIDI STATISTIKU</button>
+    <button class="dp-btn" onclick="showStatsModal()" style="background:rgba(92,219,149,.10);border-color:rgba(92,219,149,.4);color:#5cdb95;">📊 VIEW STATS</button>
     <button class="dp-btn" onclick="downloadSessionLog()" style="background:rgba(0,180,216,.10);border-color:rgba(0,180,216,.4);color:#00B4D8;">⬇ DOWNLOAD LOG (JSON)</button>
-    <button class="dp-btn" onclick="resetSession()" style="background:rgba(230,57,70,.07);border-color:rgba(230,57,70,.3);color:#e63946;">↺ RESETUJ SESIJU</button>
+    <button class="dp-btn" onclick="resetSession()" style="background:rgba(230,57,70,.07);border-color:rgba(230,57,70,.3);color:#e63946;">↺ RESET SESSION</button>
   </div>
 </div>
 
@@ -438,14 +438,14 @@ button, .btn, .btn-pref, .btn-outline, .btn-coll, .btn-asc, .btn-cash,
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:.7rem;">
       <div>
         <div style="font-size:1.1rem;font-weight:800;color:#00B4D8;">📊 SESSION STATS <span style="font-size:.6rem;color:#5cdb95;background:rgba(92,219,149,.12);padding:.1rem .3rem;border-radius:3px;margin-left:.4rem;">V2.3.10</span></div>
-        <div style="font-size:.65rem;color:#888;margin-top:.15rem;">Live tracker — sve se beleži automatski</div>
+        <div style="font-size:.65rem;color:#888;margin-top:.15rem;">Live tracker — everything is logged automatically</div>
       </div>
       <button onclick="hideStatsModal()" style="background:transparent;border:none;color:#888;font-size:1.5rem;cursor:pointer;padding:0 .4rem;">✕</button>
     </div>
     <div id="stats-content"></div>
     <div style="display:flex;gap:.5rem;margin-top:1.2rem;">
       <button onclick="downloadSessionLog()" style="flex:1;padding:.7rem;background:rgba(0,180,216,.18);border:1px solid #00B4D8;color:#00B4D8;border-radius:6px;font-weight:700;cursor:pointer;">⬇ DOWNLOAD JSON</button>
-      <button onclick="if(confirm('Resetuj sesiju? Sve dosadašnje podatke ćeš izgubiti.'))resetSession()" style="padding:.7rem 1rem;background:rgba(230,57,70,.10);border:1px solid rgba(230,57,70,.4);color:#e63946;border-radius:6px;cursor:pointer;">↺ RESET</button>
+      <button onclick="if(confirm('Reset session? All current data will be lost.'))resetSession()" style="padding:.7rem 1rem;background:rgba(230,57,70,.10);border:1px solid rgba(230,57,70,.4);color:#e63946;border-radius:6px;cursor:pointer;">↺ RESET</button>
     </div>
   </div>
 </div>
@@ -500,7 +500,7 @@ const G={
   spinning:false,
   forceWin:false,forceScatter:false,forceBig:false,
   autoCashout:0,
-  // Pre-set NOVA RUSH preferencije igrača (sekcija 4.3 izveštaja)
+  // Player pre-set NOVA RUSH preferences (section 4.3 of report)
   pref:{
     mode:'ASK',          // COLLECT | ASK | LAUNCH | CUSTOM | AUTO
     customMin:2.0,       // Donja granica CUSTOM opsega (× uloga)
@@ -509,15 +509,15 @@ const G={
   },
   // V2.3: Auto Spin state
   autoSpin:{
-    remaining:0,         // broj preostalih auto-spinova (0 = nije aktivan)
+    remaining:0,         // remaining auto-spins count (0 = not active)
     initial:0,           // ukupan broj kad je startovan (za UI display)
-    waiting:false        // true dok se NR/bonus resolves (sprečava double-trigger)
+    waiting:false        // true while NR/bonus resolves (prevents double-trigger)
   }
 };
 
 // ─── SESSION TRACKER ─────────────────────────────────────────────────────────
-// Beleži kompletnu istoriju sesije za analizu. Persistuje preko localStorage,
-// preživi refresh. User pritisne "📊 STATS" → vidi live brojke i može da
+// Logs complete session history for analysis. Persists via localStorage,
+// survives refresh. User presses "📊 STATS" → sees live numbers and can
 // download-uje JSON za slanje nazad za analizu.
 const Tracker={
   data:null,
@@ -632,16 +632,16 @@ const Tracker={
   // Three RTP metrics tracked separately (best-practice za hibridne igre):
   //
   // 1. SLOT RTP  = (base_wins + bonus_payouts) / total_bets
-  //    Pure slot math, neovisno od igračevih NR odluka.
-  //    Šta dobijaš za €1 ulog u slot mehaniku (bilo gde da ode dalje).
+  //    Pure slot math, independent of player NR decisions.
+  //    What you get for €1 stake in slot mechanics (wherever it goes after).
   //
   // 2. CRASH RTP = nr_payouts / nr_stakes
   //    Pure NR math, posmatra svaki NR launch kao nezavisan wager event.
   //    Validira da je crash sertifikat 98% RTP fer.
   //
   // 3. PLAYER TOTAL RTP = (base + bonus + nr_net) / total_bets
-  //    Šta se realno desi sa igračevim novcem.
-  //    Identično prethodnom "rtp" metriku.
+  //    What actually happens with the player's money.
+  //    Identical to the previous "rtp" metric.
   summary(){
     const spins=this.data.spins;
     const bonuses=this.data.bonuses;
@@ -738,7 +738,7 @@ function renderStatsContent(){
   const s=Tracker.summary();
   if(s.total_spins===0){
     c.innerHTML=`<div style="text-align:center;color:#888;padding:1.5rem;font-size:.9rem;">
-      Još uvek nema spinova u sesiji. Zatvori panel i spinuj nešto, pa se vrati!
+      No spins in session yet. Close the panel, spin a few rounds, then come back!
     </div>`;
     return;
   }
@@ -760,7 +760,7 @@ function renderStatsContent(){
         const sp=b.details.spins;
         const fp=b.details.final_pool;
         extra=`<div style="font-size:.62rem;color:#888;margin-top:.1rem;">
-          ${sp||'?'} spinova · pool ${fp?fp.toFixed(2)+'×':'?'} · QB events: <b style="color:${qb>0?'#f4b942':'#5cdb95'};">${qb!==undefined?qb:'(not in log)'}</b>
+          ${sp||'?'} spins · pool ${fp?fp.toFixed(2)+'×':'?'} · QB events: <b style="color:${qb>0?'#f4b942':'#5cdb95'};">${qb!==undefined?qb:'(not in log)'}</b>
         </div>`;
       }else if(b.mode==='B'&&b.details){
         const ml=b.details.max_level;
@@ -808,12 +808,12 @@ function renderStatsContent(){
   c.innerHTML=`
     <!-- V2.3.10: Session start time display -->
     <div style="background:rgba(244,185,66,.06);border-left:3px solid #f4b942;padding:.45rem .6rem;border-radius:4px;margin-bottom:.6rem;font-size:.65rem;color:#aaa;">
-      <span style="color:#f4b942;font-weight:600;letter-spacing:.05em;">SESIJA POČELA:</span>
+      <span style="color:#f4b942;font-weight:600;letter-spacing:.05em;">SESSION STARTED:</span>
       <span style="color:#e8eef5;font-weight:500;">${s.started_at?new Date(s.started_at).toLocaleString('sr-Latn-RS',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—'}</span>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.8rem;">
       <div style="background:rgba(0,180,216,.08);padding:.6rem;border-radius:6px;border:1px solid rgba(0,180,216,.2);">
-        <div style="font-size:.55rem;color:#888;letter-spacing:.08em;">UKUPNO SPINOVA</div>
+        <div style="font-size:.55rem;color:#888;letter-spacing:.08em;">TOTAL SPINS</div>
         <div style="font-size:1.4rem;font-weight:800;color:#00B4D8;">${s.total_spins}</div>
       </div>
       <div style="background:rgba(0,180,216,.08);padding:.6rem;border-radius:6px;border:1px solid rgba(0,180,216,.2);">
@@ -849,7 +849,7 @@ function renderStatsContent(){
         <div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .55rem;background:rgba(92,219,149,.08);border-left:3px solid #5cdb95;border-radius:5px;">
           <div>
             <div style="font-size:.7rem;font-weight:700;color:#e8eef5;">👤 PLAYER TOTAL RTP</div>
-            <div style="font-size:.55rem;color:#888;">stvarni bankroll outcome igrača</div>
+            <div style="font-size:.55rem;color:#888;">actual player bankroll outcome</div>
           </div>
           <div style="text-align:right;">
             <div style="font-size:1.1rem;font-weight:800;color:${rtpColor(playerRtpNum)};">${s.player_total_rtp}</div>
@@ -865,7 +865,7 @@ function renderStatsContent(){
         <div style="font-size:1rem;font-weight:700;">€${s.total_wagered}</div>
       </div>
       <div style="background:rgba(255,255,255,.04);padding:.55rem;border-radius:6px;">
-        <div style="font-size:.55rem;color:#888;letter-spacing:.08em;">VRAĆENO</div>
+        <div style="font-size:.55rem;color:#888;letter-spacing:.08em;">RETURNED</div>
         <div style="font-size:1rem;font-weight:700;">€${s.total_return}</div>
       </div>
       <div style="background:rgba(255,255,255,.04);padding:.55rem;border-radius:6px;">
@@ -893,12 +893,12 @@ function downloadSessionLog(){
   Tracker.download();
   // Brief confirmation
   const ts=new Date().toISOString().slice(11,19);
-  alert(`✓ Session log preuzet (nova_burst_session_*.json)\n\nVreme: ${ts}\nUkupno spinova: ${Tracker.summary().total_spins}\n\nPošalji ovaj fajl nazad za analizu.`);
+  alert(`✓ Session log downloaded (nova_burst_session_*.json)\n\nTime: ${ts}\nTotal spins: ${Tracker.summary().total_spins}\n\nSend this file back for analysis.`);
 }
 function resetSession(){
   Tracker.reset();
   renderStatsContent();
-  alert('✓ Sesija resetovana. Brojanje počinje od 0.');
+  alert('✓ Session reset. Counting starts from 0.');
 }
 
 // ─── UTILITIES ────────────────────────────────────────────────────────────────
@@ -1151,7 +1151,7 @@ function hideAutoPicker(){
 // Start auto-spin with given count
 function startAutoSpin(count){
   if(G.balance<G.bet){
-    alert('Nedovoljan balans za auto spin. Resetuj demo iz gear menija.');
+    alert('Insufficient balance for auto spin. Reset demo from gear menu.');
     return;
   }
   hideAutoPicker();
@@ -1259,7 +1259,7 @@ async function spin(){
     if(G.autoSpin.remaining>0)stopAutoSpin('bonus_trigger');
     await delay(400);showModeSelect();return;
   }
-  // FIX: Pre-set preferencije (sekcija 4.3 izveštaja) — routing po G.pref.mode
+  // FIX: Pre-set preferences (section 4.3 of report) — routing by G.pref.mode
   if(totalWin>G.bet){
     updWin(totalWin);
     await delay(250);
@@ -1301,7 +1301,7 @@ async function spin(){
       continueAutoSpinIfActive();
       return;
     }
-    // ASK (default) — pokaži prompt sa 8s tajmerom
+    // ASK (default) — show prompt with 8s timer
     // AUTO SPIN: ASK prompt STOPS auto-spin (player decides)
     if(G.autoSpin.remaining>0)stopAutoSpin('ask_prompt');
     showPrompt(totalWin);G.spinning=false;return;
@@ -1327,7 +1327,7 @@ function showPrompt(amount){
     <div class="pcard">
       <div class="ptitle">WIN DETECTED — NOVA RUSH?</div>
       <div class="pamt">${fmt(amount)}</div>
-      <div class="pmult">${mult}× tvoj ulog</div>
+      <div class="pmult">${mult}× your stake</div>
       ${zonesPreview}
       <div class="pbtns">
         <button class="btn btn-green" onclick="collectWin(${amount})">NAPLATI ${fmt(amount)}</button>
@@ -1358,7 +1358,7 @@ function buildPromptZonesHTML(){
       <div style="font-size:.55rem;color:var(--dim);margin-top:.1rem;">${z.pct}</div>
     </div>`).join('');
   return `<div style="margin:0 0 1rem 0;padding:.55rem .4rem;background:rgba(0,180,216,.06);border:1px solid rgba(0,180,216,.18);border-radius:8px;">
-    <div style="font-size:.55rem;color:var(--blue);letter-spacing:.1em;text-align:center;margin-bottom:.35rem;">CASHOUT ZONE — VEROVATNOĆA USPEHA · MAX 1000×</div>
+    <div style="font-size:.55rem;color:var(--blue);letter-spacing:.1em;text-align:center;margin-bottom:.35rem;">CASHOUT ZONE — SUCCESS PROBABILITY · MAX 1000×</div>
     <div style="display:flex;justify-content:space-between;gap:.2rem;">${items}</div>
   </div>`;
 }
@@ -1376,7 +1376,7 @@ function startNova(stake,autoCashoutMult){
   G.autoCashout=autoCashoutMult||0; // FIX: AUTO mode pre-set, default 0 (manual)
   const r=Math.random();
   // V2.3.10: 98% RTP NOVA RUSH, cap raised 180× → 1000× (Spaceman/Lucky Tap tier)
-  // Cap NE menja RTP (matematički validirano), samo omogućava veće max wins
+  // Cap does NOT change RTP (mathematically validated), just enables bigger max wins
   // P(crash ≥ 1000×) = 0.098% = 1 u 1020 NR-a → marketing dramatika
   G.novaBust=Math.min(Math.max(0.98/r,1.01),1000);
   show('s-nova');buildNovaScreen();
@@ -1421,7 +1421,7 @@ function buildNovaScreen(extraHdr){
 function buildCrashHistoryHTML(){
   if(!G.crashHistory||G.crashHistory.length===0){
     return `<div style="padding:.4rem .8rem;text-align:center;font-size:.62rem;color:var(--dim);letter-spacing:.08em;">
-      ISTORIJA: prazna (prvi NOVA RUSH ove sesije)
+      HISTORY: empty (first NOVA RUSH of this session)
     </div>`;
   }
   const items=G.crashHistory.slice(-10).map(c=>{
@@ -1454,7 +1454,7 @@ function buildSuggestedZonesHTML(){
       <div style="font-size:.55rem;color:var(--dim);">${z.pct} uspeh</div>
     </div>`).join('<div style="width:1px;background:rgba(255,255,255,.08);align-self:stretch;"></div>');
   return `<div style="padding:.4rem .6rem;background:rgba(0,180,216,.06);border-top:1px solid rgba(0,180,216,.15);border-bottom:1px solid rgba(0,180,216,.15);">
-    <div style="font-size:.55rem;color:var(--blue);letter-spacing:.1em;text-align:center;margin-bottom:.3rem;">CASHOUT ZONE — VEROVATNOĆE · MAX 1000×</div>
+    <div style="font-size:.55rem;color:var(--blue);letter-spacing:.1em;text-align:center;margin-bottom:.3rem;">CASHOUT ZONE — PROBABILITIES · MAX 1000×</div>
     <div style="display:flex;justify-content:space-between;align-items:center;">${items}</div>
   </div>`;
 }
@@ -1565,21 +1565,21 @@ function showModeSelect(){
   show('s-modesel');
   $('s-modesel').innerHTML=`
     <div style="font-size:.7rem;letter-spacing:.18em;color:var(--blue);margin-bottom:.4rem;">BONUS — ${G.scatCnt} SCATTERS</div>
-    <div style="font-size:.83rem;color:var(--dim);margin-bottom:.8rem;">IZABERI MISIJU</div>
+    <div style="font-size:.83rem;color:var(--dim);margin-bottom:.8rem;">CHOOSE MISSION</div>
     <div class="mode-cards">
       <div class="mode-card" onclick="startModeA()">
         <div class="mc-icon" style="color:var(--blue);">🌀</div>
         <div class="mc-name">QUANTUM CASCADE</div>
-        <div class="mc-desc">20s timer sa Pool-om do 2×. Quantum Burst (18%) reset pool + bonus nastavlja sa +2s. Garantovan payout!</div>
+        <div class="mc-desc">20s timer with Pool up to 2×. Quantum Burst (18%) resets pool + bonus continues with +2s. Guaranteed payout!</div>
         <div class="mc-badge">BONUS MODE A</div>
-        <div style="margin-top:.4rem;font-size:.68rem;color:var(--dim);">Avg ~30× ulog · Median 17× · Max ~200×</div>
+        <div style="margin-top:.4rem;font-size:.68rem;color:var(--dim);">Avg ~30× stake · Median 17× · Max ~200×</div>
       </div>
       <div class="mode-card" onclick="startModeB()">
         <div class="mc-icon" style="color:var(--gold);">🚀</div>
         <div class="mc-name">ASCEND PROTOCOL</div>
-        <div class="mc-desc">5 nivoa po 3 spina. Multipliers 1/1.5/2/3/5. Naplati ili napreduj. L5 = NOVA RUSH Finale.</div>
+        <div class="mc-desc">5 levels × 3 spins each. Multipliers 1/1.5/2/3/5. Collect or ascend. L5 = NOVA RUSH Finale.</div>
         <div class="mc-badge" style="background:rgba(255,209,102,.15);color:var(--gold);">BONUS MODE B</div>
-        <div style="margin-top:.4rem;font-size:.68rem;color:var(--dim);">Avg ~10× ulog · Max 5,000×</div>
+        <div style="margin-top:.4rem;font-size:.68rem;color:var(--dim);">Avg ~10× stake · Max 5,000×</div>
       </div>
     </div>`;
 }
@@ -1706,8 +1706,8 @@ async function spinModeA(){
   await delay(180);
 
   // F5 BALANCE: Quantum Burst (18%) RESETS pool + clears stickies + adds 2s
-  // BONUS NASTAVLJA — industrijski standard, bonus uvek ide do kraja
-  // Median payout se duplo veći (sa 7× na 17×), avg payout ostaje sličan
+  // BONUS CONTINUES — industry standard, bonus always plays to the end
+  // Median payout doubles (from 7× to 17×), avg payout stays similar
   if(Math.random()<0.18&&G.mA.wins>0){
     const pEl=$('ma-pool');
     if(pEl){pEl.style.animation='poolBurst .5s ease';pEl.textContent='BURST!';pEl.style.color='var(--red)';}
@@ -1821,7 +1821,7 @@ function startModeB(){
   G.mB={
     level:1,
     accum:0,
-    spinsLeft:3,        // V2 BALANCE: 3 spinova (was 5) — kraći level, više fokusa
+    spinsLeft:3,        // V2 BALANCE: 3 spins (was 5) — shorter level, more focus
     busted:false,
     spinning:false,
     stickyWilds:[] // FIX: Sticky wilds reset per-level
@@ -1867,10 +1867,10 @@ function buildModeBFooterHTML(){
   if(G.mB.busted){
     return `
       <div style="color:var(--red);font-size:.84rem;font-weight:800;margin-bottom:.3rem;text-align:center;letter-spacing:.05em;">
-        ⚡ RANO GAŠENJE — Rizik L${G.mB.level} se odigrao tokom spina!
+        ⚡ EARLY BUST — L${G.mB.level} risk triggered during spin!
       </div>
       <div style="font-size:.72rem;color:var(--dim);margin-bottom:.5rem;text-align:center;">
-        Dobitci dalje izgubljeni · Akumulirano sačuvano: ${fmt(G.mB.accum)}
+        Further winnings lost · Accumulated saved: ${fmt(G.mB.accum)}
       </div>
       <button class="btn btn-green" style="width:100%;max-width:340px;padding:.7rem;font-size:.9rem;" onclick="collectModeB()">
         NAPLATI ${fmt(G.mB.accum)}
@@ -1879,7 +1879,7 @@ function buildModeBFooterHTML(){
   if(isL5&&allSpinsUsed){
     return `
       <div style="font-size:.7rem;color:var(--gold);text-align:center;margin-bottom:.4rem;letter-spacing:.05em;">
-        L5 ZAVRŠEN · NOVA RUSH FINALE SPREMNA
+        L5 COMPLETE · NOVA RUSH FINALE READY
       </div>
       <button class="btn btn-red" style="width:100%;max-width:340px;padding:.85rem;font-size:.95rem;" onclick="launchModeBNova()">
         🚀 NOVA RUSH FINALE!
@@ -1888,11 +1888,11 @@ function buildModeBFooterHTML(){
   if(allSpinsUsed){
     return `
       <div style="font-size:.72rem;color:var(--dim);margin-bottom:.4rem;text-align:center;">
-        Nivo završen · Akumulirano: <strong style="color:var(--green);">${fmt(G.mB.accum)}</strong>
+        Level complete · Accumulated: <strong style="color:var(--green);">${fmt(G.mB.accum)}</strong>
       </div>
       <div class="ca-row">
         <button class="btn-coll" onclick="collectModeB()">NAPLATI ${fmt(G.mB.accum)}</button>
-        <button class="btn-asc" onclick="ascendModeB()">NAPREDUJ NA L${G.mB.level+1} ›</button>
+        <button class="btn-asc" onclick="ascendModeB()">ASCEND TO L${G.mB.level+1} ›</button>
       </div>`;
   }
   const riskTxt=G.mB.level>1?` | Rizik per spin: <strong style="color:var(--red);">${perSpinRisk}%</strong>`:'';
@@ -2037,7 +2037,7 @@ function collectModeB(){
 async function ascendModeB(){
   if(G.mB.level>=5){launchModeBNova();return;}
   G.mB.level++;
-  G.mB.spinsLeft=3;     // V2: 3 spinova po nivou
+  G.mB.spinsLeft=3;     // V2: 3 spins per level
   G.mB.busted=false;
   G.mB.stickyWilds=[]; // FIX: Wilds reset on level transition
   G.grid=genCleanGrid(); // Fresh clean grid for new level
@@ -2073,10 +2073,10 @@ function showResult(amount,win,mult,src){
     <div style="font-size:3.5rem;font-weight:900;margin:.3rem 0;color:${win?'var(--gold)':'var(--dim)'};">${win?fmt(amount):'€0.00'}</div>
     ${mult?`<div style="font-size:.9rem;color:var(--dim);">${win?'at '+fmtX(mult):'burst at '+fmtX(mult)}</div>`:''}
     ${src?`<div style="font-size:.7rem;color:var(--blue);letter-spacing:.1em;margin:.3rem 0;">${src}</div>`:''}
-    <div style="font-size:.82rem;color:var(--dim);max-width:260px;margin:.6rem 0;">${win?'Dobitci dodani na balans.':'Iznos lansiran u NOVA RUSH izgubljen.'}</div>
+    <div style="font-size:.82rem;color:var(--dim);max-width:260px;margin:.6rem 0;">${win?'Winnings added to balance.':'Amount launched into NOVA RUSH lost.'}</div>
     <div style="display:flex;gap:.7rem;margin-top:1.2rem;">
       <button class="btn btn-spin" onclick="continueFromResult()">NASTAVI DEMO</button>
-      <button class="btn-outline" onclick="if(G.autoSpin.remaining>0)stopAutoSpin('manual');G.scatCnt=3;showModeSelect()">BONUS PONOVO</button>
+      <button class="btn-outline" onclick="if(G.autoSpin.remaining>0)stopAutoSpin('manual');G.scatCnt=3;showModeSelect()">BONUS AGAIN</button>
     </div>
     ${isAutoSpinning?`<div id="auto-cont-msg" style="margin-top:.8rem;font-size:.72rem;color:var(--blue);letter-spacing:.05em;">⟳ Auto-nastavak za <span id="auto-cont-cnt">2</span>s · <span style="color:var(--gold);cursor:pointer;text-decoration:underline;" onclick="if(G.autoSpin.remaining>0)stopAutoSpin('manual');">STOP</span></div>`:''}
     <div style="font-size:.78rem;color:var(--dim);margin-top:.9rem;">Balans: <strong style="color:var(--text);">${fmt(G.balance)}</strong></div>`;
@@ -2140,9 +2140,9 @@ function showIntro(){
       </div>
       <!-- V2.3.10: Sequential Wagers info + new max win promo -->
       <div style="max-width:480px;margin:0 auto 1.1rem;padding:.55rem .8rem;background:rgba(0,180,216,.06);border:1px solid rgba(0,180,216,.18);border-radius:7px;font-size:.62rem;color:var(--dim);line-height:1.55;letter-spacing:.02em;">
-        <span style="color:#5cdb95;font-weight:700;">SLOT</span> i <span style="color:#f4b942;font-weight:700;">CRASH</span> komponente imaju nezavisne RTP-ove.
-        Slot dobitak možeš naplatiti ili rizikovati u Nova Rush-u <span style="color:#FF7B5C;font-weight:700;">(do 1,000×)</span>.
-        Mode B Level 5 finale ide do <span style="color:#FF7B5C;font-weight:700;">5,000×</span>.
+        <span style="color:#5cdb95;font-weight:700;">SLOT</span> i <span style="color:#f4b942;font-weight:700;">CRASH</span> components have independent RTPs.
+        You can collect the slot win or risk it in Nova Rush <span style="color:#FF7B5C;font-weight:700;">(do 1,000×)</span>.
+        Mode B Level 5 finale goes up to <span style="color:#FF7B5C;font-weight:700;">5,000×</span>.
       </div>
       <button class="btn btn-spin" style="font-size:1.05rem;padding:.85rem 2.8rem;" onclick="showGame()">POKRENITE DEMO</button>
       <div style="margin-top:.9rem;font-size:.65rem;color:rgba(142,172,192,.4);letter-spacing:.1em;">INVESTOR DEMO v2.3.10 · POVERLJIVO</div>
@@ -2165,7 +2165,7 @@ function showGame(preserveGrid){
   show('s-game');
   $('s-game').innerHTML=`
     <div class="hud">
-      <div><div class="hud-lbl">BALANS</div><div class="hud-val" id="hud-bal">${fmt(G.balance)}</div></div>
+      <div><div class="hud-lbl">BALANCE</div><div class="hud-val" id="hud-bal">${fmt(G.balance)}</div></div>
       <div style="text-align:center;"><div class="hud-lbl">WIN</div>
         <div class="hud-val" style="color:var(--green);" id="hud-win"></div></div>
       <div style="text-align:right;">
@@ -2203,7 +2203,7 @@ function showGame(preserveGrid){
   // Demo panel se sada otvara klikom na ⚙ gear (u controls), ne pokazuje se automatski
 }
 
-// ─── PRE-SET NOVA RUSH PREFERENCIJE (sekcija 4.3) ────────────────────────────
+// ─── PRE-SET NOVA RUSH PREFERENCES (section 4.3) ─────────────────────────────
 function prefBtnLabel(){
   const p=G.pref;
   if(p.mode==='COLLECT')return'🔒 COLLECT';
@@ -2222,18 +2222,18 @@ function showPrefs(){
   ovl.innerHTML=`
     <div class="pref-card">
       <div class="pref-hd">NOVA RUSH POPUP MOD</div>
-      <div class="pref-sub">Izaberi ponašanje za dobitke iznad uloga (pre-set preferencije)</div>
+      <div class="pref-sub">Choose behavior for wins above stake (pre-set preferences)</div>
       <div class="pref-opt" data-mode="COLLECT" onclick="setPrefMode('COLLECT')">
         <div class="pref-opt-h">🔒 COLLECT — Uvek naplati</div>
-        <div class="pref-opt-d">Svi dobitci se automatski naplaćuju. Nikad ne pita za Nova Rush. (konzervativno)</div>
+        <div class="pref-opt-d">All wins auto-collected. Never prompts for Nova Rush. (conservative)</div>
       </div>
       <div class="pref-opt" data-mode="ASK" onclick="setPrefMode('ASK')">
         <div class="pref-opt-h">❓ ASK — Pitaj svaki put <span style="color:var(--gold);font-size:.6rem;">DEFAULT</span></div>
-        <div class="pref-opt-d">Prompt sa 8-sekundnim tajmerom za svaki dobitak iznad uloga.</div>
+        <div class="pref-opt-d">Prompt with 8-second timer for every win above stake.</div>
       </div>
       <div class="pref-opt" data-mode="LAUNCH" onclick="setPrefMode('LAUNCH')">
         <div class="pref-opt-h">🚀 LAUNCH — Uvek lansiraj</div>
-        <div class="pref-opt-d">Svaki kvalifikovani dobitak ide direktno u Nova Rush. (crash-native igrači)</div>
+        <div class="pref-opt-d">Every qualifying win goes directly to Nova Rush. (crash-native players)</div>
       </div>
       <div class="pref-opt" data-mode="CUSTOM" onclick="setPrefMode('CUSTOM')">
         <div class="pref-opt-h">🎯 CUSTOM — Lansiraj u opsegu</div>
@@ -2250,7 +2250,7 @@ function showPrefs(){
           (LAUNCH + autoplay kombinacija)</div>
       </div>
       <div class="pref-btns">
-        <button class="btn-outline" onclick="closePrefs()" style="flex:1;">OTKAŽI</button>
+        <button class="btn-outline" onclick="closePrefs()" style="flex:1;">CANCEL</button>
         <button class="btn btn-spin" onclick="savePrefs()" style="flex:1;font-size:.82rem;padding:.5rem 1rem;">POTVRDI</button>
       </div>
     </div>`;
@@ -2283,7 +2283,7 @@ function savePrefs(){
     G.pref.autoCashoutMult=Math.max(1.05,Math.min(50,v));
   }
   closePrefs();
-  // Ažuriraj dugme
+  // Update button
   const b=$('pref-btn');if(b)b.textContent=prefBtnLabel();
 }
 function closePrefs(){
@@ -2313,7 +2313,7 @@ function toggleDP(force){
   if(tgl){tgl.classList.toggle('is-active',expanded);}
 }
 // Auto-close panel posle klika na neku demo akciju
-// (script je na kraju body-ja, DOM je već parsiran)
+// (script is at the end of body, DOM already parsed)
 (function(){
   const dp=$('dp');
   if(!dp)return;
@@ -2326,7 +2326,7 @@ function toggleDP(force){
 
 // ─── PIN ACCESS CONTROL ──────────────────────────────────────────────────────
 // PIN code za pristup demo verziji. Promeniti pre deploy-a ako je potrebno.
-// Napomena: ovo je client-side zaštita za sprečavanje slučajnog pristupa,
+// Note: this is client-side protection to prevent accidental access,
 // nije pravi security mehanizam.
 const DEMO_PIN='2387'; // Godina iz lore-a "Godina 2387" — lako za pamtiti
 const PIN_MAX_ATTEMPTS=5;
@@ -2342,7 +2342,7 @@ function checkPin(){
   const now=Date.now();
   if(now<pinLockedUntil){
     const sec=Math.ceil((pinLockedUntil-now)/1000);
-    if(err)err.textContent=`Previše pokušaja. Sačekaj ${sec}s.`;
+    if(err)err.textContent=`Too many attempts. Wait ${sec}s.`;
     return;
   }
   const entered=(inp.value||'').trim();
@@ -2356,7 +2356,7 @@ function checkPin(){
     setTimeout(()=>{showIntro();},350);
     return;
   }
-  // Pogrešan PIN
+  // Wrong PIN
   pinAttempts++;
   if(inp){
     inp.value='';
@@ -2367,7 +2367,7 @@ function checkPin(){
   if(pinAttempts>=PIN_MAX_ATTEMPTS){
     pinLockedUntil=now+PIN_LOCKOUT_MS;
     pinAttempts=0;
-    if(err)err.textContent=`Previše pokušaja. Pristup blokiran 30s.`;
+    if(err)err.textContent=`Too many attempts. Access blocked for 30s.`;
     if(inp)inp.disabled=true;
     if(btn)btn.disabled=true;
     setTimeout(()=>{
@@ -2376,20 +2376,20 @@ function checkPin(){
       if(err)err.textContent='';
     },PIN_LOCKOUT_MS);
   } else {
-    if(err)err.textContent=`Pogrešan PIN. Pokušaj ${pinAttempts}/${PIN_MAX_ATTEMPTS}.`;
+    if(err)err.textContent=`Wrong PIN. Attempt ${pinAttempts}/${PIN_MAX_ATTEMPTS}.`;
   }
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function initApp(){
-  // Provera da li je već autentifikovan u ovoj sesiji
+  // Check if already authenticated in this session
   try{
     if(sessionStorage.getItem('nb-auth')==='ok'){
       showIntro();
       return;
     }
-  }catch(e){/* sessionStorage može biti blokiran u nekim browserima */}
-  // Prikaži PIN screen
+  }catch(e){/* sessionStorage may be blocked in some browsers */}
+  // Show PIN screen
   show('s-pin');
   setTimeout(()=>{const i=$('pin-input');if(i)i.focus();},250);
 }

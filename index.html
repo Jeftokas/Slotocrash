@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="build-id" content="v2.2-f5-2026-06-01">
-<title>NOVA BURST — Demo V2.3.10</title>
+<title>NOVA BURST — Demo V2.3.11</title>
 <style>
 :root{
   --bg:#050A1A;--blue:#00B4D8;--gold:#FFD166;--red:#EF233C;
@@ -45,7 +45,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 /* Special cells for W and S characters — larger, bolder */
 .cell.wild-cell{font-size:clamp(1.1rem,3.2vw,1.6rem);font-weight:900;}
 .cell.scat-cell{font-size:clamp(1.1rem,3.2vw,1.6rem);font-weight:900;}
-/* V2.3.10: STRONG visual distinction between regular and sticky wilds */
+/* V2.3.11: STRONG visual distinction between regular and sticky wilds */
 /* Regular wild: dark gold bg, yellow W text (defined in SYM.W) */
 /* Sticky wild: radiant orb with white core, golden halo, pulsing scale */
 .cell.sticky-wild{
@@ -363,8 +363,8 @@ button, .btn, .btn-pref, .btn-outline, .btn-coll, .btn-asc, .btn-cash,
 </style>
 </head>
 <body>
-<!-- VERSION BADGE — vizuelna potvrda verzije (V2.3.10) -->
-<div style="position:fixed;top:6px;left:6px;z-index:9998;background:rgba(0,180,216,.18);border:1px solid rgba(0,180,216,.5);color:#00B4D8;padding:.18rem .42rem;border-radius:4px;font-size:.6rem;font-weight:700;letter-spacing:.05em;font-family:Arial,sans-serif;pointer-events:none;">V2.3.10</div>
+<!-- VERSION BADGE — visual version confirmation (V2.3.11) -->
+<div style="position:fixed;top:6px;left:6px;z-index:9998;background:rgba(0,180,216,.18);border:1px solid rgba(0,180,216,.5);color:#00B4D8;padding:.18rem .42rem;border-radius:4px;font-size:.6rem;font-weight:700;letter-spacing:.05em;font-family:Arial,sans-serif;pointer-events:none;">V2.3.11</div>
 
 <!-- V2.3: Auto Spin picker -->
 <div id="auto-picker" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9997;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px);">
@@ -437,7 +437,7 @@ button, .btn, .btn-pref, .btn-outline, .btn-coll, .btn-asc, .btn-cash,
   <div style="background:#0a1929;border:1px solid #00B4D8;border-radius:12px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;padding:1.4rem;color:#e8eef5;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:.7rem;">
       <div>
-        <div style="font-size:1.1rem;font-weight:800;color:#00B4D8;">📊 SESSION STATS <span style="font-size:.6rem;color:#5cdb95;background:rgba(92,219,149,.12);padding:.1rem .3rem;border-radius:3px;margin-left:.4rem;">V2.3.10</span></div>
+        <div style="font-size:1.1rem;font-weight:800;color:#00B4D8;">📊 SESSION STATS <span style="font-size:.6rem;color:#5cdb95;background:rgba(92,219,149,.12);padding:.1rem .3rem;border-radius:3px;margin-left:.4rem;">V2.3.11</span></div>
         <div style="font-size:.65rem;color:#888;margin-top:.15rem;">Live tracker — everything is logged automatically</div>
       </div>
       <button onclick="hideStatsModal()" style="background:transparent;border:none;color:#888;font-size:1.5rem;cursor:pointer;padding:0 .4rem;">✕</button>
@@ -452,21 +452,22 @@ button, .btn, .btn-pref, .btn-outline, .btn-coll, .btn-asc, .btn-cash,
 <script>
 // ─── SYMBOL DEFINITIONS ───────────────────────────────────────────────────────
 // W = letter "W" (Wild), B = letter "S" (Scatter) — visually distinct from pay symbols
-// V2.3.10 PRODUCTION TUNE: Paytable × 1.10 from V2.3.10 baseline
-// V2.3.10 cap 2 was too aggressive — dropped base RTP ~23pp, paytable × 1.03 didn't compensate.
-// V2.3.10: Cap relaxed to 3 (eliminates 4+/5+ wilds = visual win) + paytable × 1.10.
-// Total scaling: V5b × 0.95 × 0.95 × 0.96 × 1.03 × 1.10 = × 0.982 of V5b baseline.
-// → COLLECT RTP ~96.8% (MGA Malta target), variance ±2-3pp @ 50k, ±2pp @ 1M
+// V2.3.11 PRODUCTION TUNE: Paytable × 0.96 from V2.3.11 baseline
+// V2.3.11 paytable was tuned to 96.5% RTP under buggy sim (Mode B bust = lose all).
+// HTML reality: Mode B bust kept full accum → real RTP was ~104%.
+// V2.3.11 introduces Mode B -50% bust penalty (genuine risk) + paytable × 0.96 to return to 96.5%.
+// Total scaling: V5b × 0.95 × 0.95 × 0.96 × 1.03 × 1.10 × 0.967 = × 0.950 of V5b baseline.
+// → COLLECT RTP ~96.5% (MGA Malta target), variance ±2-3pp @ 50k, ±2pp @ 1M
 const SYM={
-  // V2.3.10: × 1.10 from V2.3.10 — compensates Cap 3 wild mechanic
-  Q:{ch:'◈',clr:'#00EEFF',bg:'rgba(0,130,190,.55)',bdr:'rgba(0,238,255,.85)',  pay:[0.89,2.90,7.07,16.10,35.34,70.68,141.35,282.71,612.54]},
-  N:{ch:'◆',clr:'#EE55FF',bg:'rgba(120,15,160,.55)',bdr:'rgba(238,85,255,.85)',pay:[0.44,1.61,3.84,9.03,19.24,38.48,76.97,160.99,341.62]},
-  S:{ch:'★',clr:'#FFD700',bg:'rgba(140,90,0,.55)',  bdr:'rgba(255,215,0,.85)', pay:[0.28,1.02,2.59,6.12,13.34,27.49,56.54,119.36,257.59]},
-  I:{ch:'◉',clr:'#55DDFF',bg:'rgba(0,70,140,.55)', bdr:'rgba(85,221,255,.85)',pay:[0.14,0.62,1.61,3.84,8.63,18.07,37.31,78.53,170.40]},
-  A:{ch:'⬡',clr:'#BBDDEE',bg:'rgba(40,70,90,.5)',  bdr:'rgba(187,221,238,.75)',pay:[0.10,0.35,0.96,2.31,5.27,11.00,23.17,48.69,106.02]},
-  T:{ch:'⊕',clr:'#55FFBB',bg:'rgba(0,90,65,.5)',   bdr:'rgba(85,255,187,.75)',pay:[0.07,0.25,0.66,1.54,3.53,7.38,15.47,32.98,70.68]},
-  C:{ch:'✦',clr:'#CCEEFF',bg:'rgba(5,30,80,.5)',   bdr:'rgba(204,238,255,.7)', pay:[0.04,0.17,0.48,1.20,2.71,5.65,11.94,25.14,54.98]},
-  D:{ch:'▪',clr:'#7799BB',bg:'rgba(15,35,55,.5)',  bdr:'rgba(119,153,187,.65)',pay:[0.04,0.11,0.31,0.76,1.75,3.62,7.61,16.10,34.55]},
+  // V2.3.11: × 0.96 from V2.3.11 — compensates Mode B -50% bust penalty
+  Q:{ch:'◈',clr:'#00EEFF',bg:'rgba(0,130,190,.55)',bdr:'rgba(0,238,255,.85)',  pay:[0.86,2.80,6.84,15.57,34.17,68.35,136.69,273.38,592.33]},
+  N:{ch:'◆',clr:'#EE55FF',bg:'rgba(120,15,160,.55)',bdr:'rgba(238,85,255,.85)',pay:[0.43,1.56,3.71,8.73,18.61,37.21,74.43,155.68,330.35]},
+  S:{ch:'★',clr:'#FFD700',bg:'rgba(140,90,0,.55)',  bdr:'rgba(255,215,0,.85)', pay:[0.27,0.99,2.50,5.92,12.90,26.58,54.67,115.42,249.09]},
+  I:{ch:'◉',clr:'#55DDFF',bg:'rgba(0,70,140,.55)', bdr:'rgba(85,221,255,.85)',pay:[0.14,0.60,1.56,3.71,8.35,17.47,36.08,75.94,164.78]},
+  A:{ch:'⬡',clr:'#BBDDEE',bg:'rgba(40,70,90,.5)',  bdr:'rgba(187,221,238,.75)',pay:[0.10,0.34,0.93,2.23,5.10,10.64,22.41,47.08,102.52]},
+  T:{ch:'⊕',clr:'#55FFBB',bg:'rgba(0,90,65,.5)',   bdr:'rgba(85,255,187,.75)',pay:[0.07,0.24,0.64,1.49,3.41,7.14,14.96,31.89,68.35]},
+  C:{ch:'✦',clr:'#CCEEFF',bg:'rgba(5,30,80,.5)',   bdr:'rgba(204,238,255,.7)', pay:[0.04,0.16,0.46,1.16,2.62,5.46,11.55,24.31,53.17]},
+  D:{ch:'▪',clr:'#7799BB',bg:'rgba(15,35,55,.5)',  bdr:'rgba(119,153,187,.65)',pay:[0.04,0.11,0.30,0.73,1.69,3.50,7.36,15.57,33.41]},
   // Wild = bold "W" letter, Scatter = bold "S" letter — clearly distinct
   W:{ch:'W', clr:'#FFDD00',bg:'rgba(150,110,0,.65)',bdr:'rgba(255,221,0,.95)', special:true},
   B:{ch:'S', clr:'#FF2244',bg:'rgba(150,10,25,.65)',bdr:'rgba(255,34,68,.95)', special:true}
@@ -503,14 +504,14 @@ const G={
   // Player pre-set NOVA RUSH preferences (section 4.3 of report)
   pref:{
     mode:'ASK',          // COLLECT | ASK | LAUNCH | CUSTOM | AUTO
-    customMin:2.0,       // Donja granica CUSTOM opsega (× uloga)
+    customMin:2.0,       // Lower bound of CUSTOM range (× stake)
     customMax:10.0,      // Gornja granica CUSTOM opsega (× uloga)
-    autoCashoutMult:2.0  // Auto-cashout multiplier u AUTO modu
+    autoCashoutMult:2.0  // Auto-cashout multiplier in AUTO mode
   },
   // V2.3: Auto Spin state
   autoSpin:{
     remaining:0,         // remaining auto-spins count (0 = not active)
-    initial:0,           // ukupan broj kad je startovan (za UI display)
+    initial:0,           // total count when started (for UI display)
     waiting:false        // true while NR/bonus resolves (prevents double-trigger)
   }
 };
@@ -518,7 +519,7 @@ const G={
 // ─── SESSION TRACKER ─────────────────────────────────────────────────────────
 // Logs complete session history for analysis. Persists via localStorage,
 // survives refresh. User presses "📊 STATS" → sees live numbers and can
-// download-uje JSON za slanje nazad za analizu.
+// downloads JSON for sending back for analysis.
 const Tracker={
   data:null,
   STORE_KEY:'nb_v2_session',
@@ -536,7 +537,7 @@ const Tracker={
 
   startNew(){
     this.data={
-      version:'V2.3.10',
+      version:'V2.3.11',
       started_at:new Date().toISOString(),
       ended_at:null,
       spins:[],
@@ -629,14 +630,14 @@ const Tracker={
 
   // Compute summary stats — V2.3 Sequential Wagers model
   //
-  // Three RTP metrics tracked separately (best-practice za hibridne igre):
+  // Three RTP metrics tracked separately (best-practice for hybrid games):
   //
   // 1. SLOT RTP  = (base_wins + bonus_payouts) / total_bets
   //    Pure slot math, independent of player NR decisions.
   //    What you get for €1 stake in slot mechanics (wherever it goes after).
   //
   // 2. CRASH RTP = nr_payouts / nr_stakes
-  //    Pure NR math, posmatra svaki NR launch kao nezavisan wager event.
+  //    Pure NR math, treats each NR launch as an independent wager event.
   //    Validira da je crash sertifikat 98% RTP fer.
   //
   // 3. PLAYER TOTAL RTP = (base + bonus + nr_net) / total_bets
@@ -646,7 +647,7 @@ const Tracker={
     const spins=this.data.spins;
     const bonuses=this.data.bonuses;
     const allNRs=this.data.nova_rushes;
-    const baseOnlyNRs=allNRs.filter(nr=>nr.source==='base'); // za stari nr_count
+    const baseOnlyNRs=allNRs.filter(nr=>nr.source==='base'); // for legacy nr_count
     const n=spins.length;
     if(n===0)return {total_spins:0};
 
@@ -695,7 +696,7 @@ const Tracker={
       nr_wins:baseOnlyNRs.filter(nr=>nr.won).length,
       nr_losses:baseOnlyNRs.filter(nr=>!nr.won).length,
       duration_min:Math.round((Date.now()-new Date(this.data.started_at).getTime())/60000),
-      started_at:this.data.started_at  // V2.3.10: expose start time in summary
+      started_at:this.data.started_at  // V2.3.11: expose start time in summary
     };
   },
 
@@ -806,7 +807,7 @@ function renderStatsContent(){
     return '#FF7B5C'; // high variance
   };
   c.innerHTML=`
-    <!-- V2.3.10: Session start time display -->
+    <!-- V2.3.11: Session start time display -->
     <div style="background:rgba(244,185,66,.06);border-left:3px solid #f4b942;padding:.45rem .6rem;border-radius:4px;margin-bottom:.6rem;font-size:.65rem;color:#aaa;">
       <span style="color:#f4b942;font-weight:600;letter-spacing:.05em;">SESSION STARTED:</span>
       <span style="color:#e8eef5;font-weight:500;">${s.started_at?new Date(s.started_at).toLocaleString('sr-Latn-RS',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—'}</span>
@@ -843,7 +844,7 @@ function renderStatsContent(){
           </div>
           <div style="text-align:right;">
             <div style="font-size:1.1rem;font-weight:800;color:${rtpColor(crashRtpNum)};">${s.crash_rtp}</div>
-            <div style="font-size:.55rem;color:#888;">${s.crash_events>0?'€'+s.crash_return+' / €'+s.crash_wagered:'(nema NR-a)'}</div>
+            <div style="font-size:.55rem;color:#888;">${s.crash_events>0?'€'+s.crash_return+' / €'+s.crash_wagered:'(no NR yet)'}</div>
           </div>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .55rem;background:rgba(92,219,149,.08);border-left:3px solid #5cdb95;border-radius:5px;">
@@ -914,7 +915,7 @@ function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
   $(id).classList.remove('hidden');
   CUR=id;
-  // Auto-close demo panel pri promeni ekrana (ako je bio otvoren)
+  // Auto-close demo panel on screen change (if it was open)
   const dp=$('dp');if(dp&&dp.classList.contains('expanded')){
     dp.classList.remove('expanded');
     const tgl=$('dp-toggle-btn');if(tgl)tgl.classList.remove('is-active');
@@ -949,8 +950,8 @@ function getPay(sym,sz){
 }
 
 // ─── GRID GENERATION ─────────────────────────────────────────────────────────
-// V2.3.10: Cap visible random wilds at MAX 3 per spin (less aggressive than V2.3.10 cap 2).
-// V2.3.10 cap 2 dropped RTP ~23pp (too aggressive). Cap 3 + paytable × 1.10 hits 96.5% target.
+// V2.3.11: Cap visible random wilds at MAX 3 per spin (less aggressive than V2.3.11 cap 2).
+// V2.3.11 cap 2 dropped RTP ~23pp (too aggressive). Cap 3 + paytable × 1.10 hits 96.5% target.
 // Distribucija wildova po spinu: 0:15%, 1:29%, 2:28%, 3:28% (3+4+5+6+ accumulated)
 // In bonus modes: max 3 random + max 2 sticky = up to 5 total, but stickies have
 // completely different visual (golden orb), so easy to distinguish.
@@ -1005,7 +1006,7 @@ function genCleanGrid(){
 function renderGrid(el,grid,winCells,newCells,cascMult,stickyPositions){
   if(!el)return;
   el.innerHTML='';
-  // V2.3.10: Determine sticky positions to highlight visually
+  // V2.3.11: Determine sticky positions to highlight visually
   // If not passed, default to current G.mA / G.mB stickies (auto-detect mode context)
   let stickySet=null;
   if(stickyPositions){
@@ -1023,7 +1024,7 @@ function renderGrid(el,grid,winCells,newCells,cascMult,stickyPositions){
     }
     const isWin=!!(winCells&&winCells.includes(i));
     const isNew=!!(newCells&&newCells.includes(i));
-    // V2.3.10: Mark sticky wild positions with special class for golden glow effect
+    // V2.3.11: Mark sticky wild positions with special class for golden glow effect
     const isSticky=s==='W'&&stickySet&&stickySet.has(i);
     const extra=s==='B'?'scat-cell':s==='W'?'wild-cell':'';
     const stickyCls=isSticky?'sticky-wild':'';
@@ -1040,7 +1041,7 @@ function renderGrid(el,grid,winCells,newCells,cascMult,stickyPositions){
 async function runCascades(levelMult, stickyWildsList){
   const lm=levelMult||1;
   let depth=0,totalWin=0;
-  // V2.3.10 DESIGN: "Wild earns sticky status by winning"
+  // V2.3.11 DESIGN: "Wild earns sticky status by winning"
   //
   // Wilds start as regular substitutes (no glow, behave like base game).
   // When a wild participates in a winning cluster, it gets PROMOTED to sticky:
@@ -1060,7 +1061,7 @@ async function runCascades(levelMult, stickyWildsList){
     if(!clusters.length)break;
     const winCells=clusters.flatMap(c=>c.cells);
 
-    // V2.3.10: Promote winning wilds to sticky status (mutates stickyList by reference)
+    // V2.3.11: Promote winning wilds to sticky status (mutates stickyList by reference)
     if(enablePromotion){
       for(const cell of winCells){
         if(G.grid[cell]==='W'&&!stickyList.includes(cell)&&stickyList.length<STICKY_CAP){
@@ -1074,11 +1075,11 @@ async function runCascades(levelMult, stickyWildsList){
     // the new 4+ threshold compound too aggressively. Cap 3 keeps cascades
     // meaningful but prevents extreme amplification.
     const cascMult=Math.min(3,depth===0?1:1+depth)*lm;
-    // V2.3.10: pass current stickyPositions so newly promoted wilds get golden glow
+    // V2.3.11: pass current stickyPositions so newly promoted wilds get golden glow
     renderGrid(gridEl(),G.grid,winCells,null,cascMult,[...stickyPositions]);
     let lw=0;clusters.forEach(c=>lw+=getPay(c.sym,c.cells.length));
     totalWin+=lw*cascMult;
-    // V2.3.10 UX FIX: Update win HUD DURING cascade levels so player sees
+    // V2.3.11 UX FIX: Update win HUD DURING cascade levels so player sees
     // wins building up progressively. Previously only final win was shown.
     // - Base game: update top win HUD
     // - Mode A/B bonus: those modes update their own UI separately
@@ -1240,7 +1241,7 @@ async function spin(){
   G.scatCnt=G.grid.filter(s=>s==='B').length;
   updScatPips();
   await delay(200);
-  const totalWin=await runCascades(1, null); // V2.3.10: basic slot passes NO stickies
+  const totalWin=await runCascades(1, null); // V2.3.11: basic slot passes NO stickies
   G.spinWin=totalWin;
   G.scatCnt=G.grid.filter(s=>s==='B').length;
   updScatPips();
@@ -1265,7 +1266,7 @@ async function spin(){
     await delay(250);
     const pm=G.pref.mode;
     if(pm==='COLLECT'){
-      // Uvek naplati — bez prompta
+      // Always collect — no prompt
       G.balance+=totalWin;updHUD();
       await delay(700);updWin(0);
       G.spinning=false;if(sBtn)sBtn.disabled=false;
@@ -1274,26 +1275,26 @@ async function spin(){
       return;
     }
     if(pm==='LAUNCH'){
-      // Uvek lansiraj — bez auto-cashout. Auto-spin pauses do NR resolve.
+      // Always launch — no auto-cashout. Auto-spin pauses until NR resolves.
       if(G.autoSpin.remaining>0)G.autoSpin.waiting=true;
       startNova(totalWin,0);
       G.spinning=false;return;
     }
     if(pm==='AUTO'){
-      // Uvek lansiraj + auto-cashout na pre-set multiplikatoru
+      // Always launch + auto-cashout at pre-set multiplier
       if(G.autoSpin.remaining>0)G.autoSpin.waiting=true;
       startNova(totalWin,G.pref.autoCashoutMult);
       G.spinning=false;return;
     }
     if(pm==='CUSTOM'){
-      // Lansiraj samo ako je dobitak u opsegu min×..max×
+      // Launch only if win is in min×..max× range
       const winMult=totalWin/G.bet;
       if(winMult>=G.pref.customMin&&winMult<=G.pref.customMax){
         if(G.autoSpin.remaining>0)G.autoSpin.waiting=true;
         startNova(totalWin,0);
         G.spinning=false;return;
       }
-      // Izvan opsega → naplati
+      // Outside range → collect
       G.balance+=totalWin;updHUD();
       await delay(700);updWin(0);
       G.spinning=false;if(sBtn)sBtn.disabled=false;
@@ -1330,10 +1331,10 @@ function showPrompt(amount){
       <div class="pmult">${mult}× your stake</div>
       ${zonesPreview}
       <div class="pbtns">
-        <button class="btn btn-green" onclick="collectWin(${amount})">NAPLATI ${fmt(amount)}</button>
+        <button class="btn btn-green" onclick="collectWin(${amount})">COLLECT ${fmt(amount)}</button>
         <button class="btn btn-red" onclick="launchNova(${amount})">NOVA RUSH ›</button>
       </div>
-      <div style="font-size:.68rem;color:var(--dim);margin-top:.7rem;">Auto-naplata za <span id="pt-cnt">8</span>s</div>
+      <div style="font-size:.68rem;color:var(--dim);margin-top:.7rem;">Auto-collect in <span id="pt-cnt">8</span>s</div>
       <div class="tbarw"><div class="tbar"></div></div>
     </div>`;
   show('s-prompt');
@@ -1342,9 +1343,9 @@ function showPrompt(amount){
   G._ptimer=ti;
 }
 
-// V2.3: Cashout zones preview za pre-NR prompt (kompaktnija verzija)
+// V2.3: Cashout zones preview for pre-NR prompt (compact version)
 function buildPromptZonesHTML(){
-  // V2.3.10: Cap 1000× — zones show full risk/reward spread including extreme options
+  // V2.3.11: Cap 1000× — zones show full risk/reward spread including extreme options
   const zones=[
     {mult:1.10, pct:'89%', col:'#5cdb95'},
     {mult:2.00, pct:'49%', col:'#16D996'},
@@ -1375,9 +1376,9 @@ function startNova(stake,autoCashoutMult){
   G.novaSource='base'; // TRACKER context
   G.autoCashout=autoCashoutMult||0; // FIX: AUTO mode pre-set, default 0 (manual)
   const r=Math.random();
-  // V2.3.10: 98% RTP NOVA RUSH, cap raised 180× → 1000× (Spaceman/Lucky Tap tier)
+  // V2.3.11: 98% RTP NOVA RUSH, cap raised 180× → 1000× (Spaceman/Lucky Tap tier)
   // Cap does NOT change RTP (mathematically validated), just enables bigger max wins
-  // P(crash ≥ 1000×) = 0.098% = 1 u 1020 NR-a → marketing dramatika
+  // P(crash ≥ 1000×) = 0.098% = 1 in 1,020 NRs → marketing drama
   G.novaBust=Math.min(Math.max(0.98/r,1.01),1000);
   show('s-nova');buildNovaScreen();
   G.novaTimer=setInterval(tickNova,85);
@@ -1438,7 +1439,7 @@ function buildCrashHistoryHTML(){
   </div>`;
 }
 
-// V2.3.10 NOVA RUSH UX: Suggested cashout zones with realistic probabilities
+// V2.3.11 NOVA RUSH UX: Suggested cashout zones with realistic probabilities
 // P(crash >= X) = 0.98/X for X >= 1.01 (98% RTP), cap raised to 1000×
 function buildSuggestedZonesHTML(){
   const zones=[
@@ -1577,7 +1578,7 @@ function showModeSelect(){
       <div class="mode-card" onclick="startModeB()">
         <div class="mc-icon" style="color:var(--gold);">🚀</div>
         <div class="mc-name">ASCEND PROTOCOL</div>
-        <div class="mc-desc">5 levels × 3 spins each. Multipliers 1/1.5/2/3/5. Collect or ascend. L5 = NOVA RUSH Finale.</div>
+        <div class="mc-desc">5 levels × 3 spins each. Multipliers 1/1.5/2/3/5. BUST = -50% accumulated. L5 = NOVA RUSH Finale (5,000× cap).</div>
         <div class="mc-badge" style="background:rgba(255,209,102,.15);color:var(--gold);">BONUS MODE B</div>
         <div style="margin-top:.4rem;font-size:.68rem;color:var(--dim);">Avg ~10× stake · Max 5,000×</div>
       </div>
@@ -1729,7 +1730,7 @@ async function spinModeA(){
   }
 
   // Run cascades with cascade multiplier (depth-based)
-  // V2.3.10: stickyWilds passed by reference — runCascades MUTATES it,
+  // V2.3.11: stickyWilds passed by reference — runCascades MUTATES it,
   // promoting wilds in winning clusters to sticky status.
   // Removed the old "add all wilds on grid" loop — only winning wilds become sticky.
   const w=await runCascades(1, G.mA.stickyWilds);
@@ -1740,7 +1741,7 @@ async function spinModeA(){
     if(w>G.bet)G.mA.pool=Math.min(G.mA.pool+0.18,2.0);
   }
 
-  // V2.3.10 defensive: ensure any promoted stickies are still rendered as W
+  // V2.3.11 defensive: ensure any promoted stickies are still rendered as W
   // (runCascades already preserves them, but defensive in case of bug)
   let wildsRestored=false;
   G.mA.stickyWilds.forEach(p=>{
@@ -1793,7 +1794,7 @@ function collectModeA(){
 function endModeA(){
   G.mA.ended=true;
   if(G.mA.timerInterval){clearInterval(G.mA.timerInterval);G.mA.timerInterval=null;}
-  // V2.3.10 BUG FIX: clear stickyWilds to prevent leak into basic slot
+  // V2.3.11 BUG FIX: clear stickyWilds to prevent leak into basic slot
   G.mA.stickyWilds=[];
   const sBtn=$('ma-spin');if(sBtn){sBtn.disabled=true;sBtn.style.opacity='.4';}
   const te=$('ma-time');
@@ -1823,6 +1824,7 @@ function startModeB(){
     accum:0,
     spinsLeft:3,        // V2 BALANCE: 3 spins (was 5) — shorter level, more focus
     busted:false,
+    bustPenalty:0,      // V2.3.11: amount lost on bust (50% of accum at bust time)
     spinning:false,
     stickyWilds:[] // FIX: Sticky wilds reset per-level
   };
@@ -1865,15 +1867,16 @@ function buildModeBFooterHTML(){
   const perSpinRisk=G.mB.level>1?(lvl.risk/3).toFixed(1):0;
 
   if(G.mB.busted){
+    const lostAmt = G.mB.bustPenalty || 0;
     return `
       <div style="color:var(--red);font-size:.84rem;font-weight:800;margin-bottom:.3rem;text-align:center;letter-spacing:.05em;">
-        ⚡ EARLY BUST — L${G.mB.level} risk triggered during spin!
+        💥 BUST — L${G.mB.level} risk triggered!
       </div>
-      <div style="font-size:.72rem;color:var(--dim);margin-bottom:.5rem;text-align:center;">
-        Further winnings lost · Accumulated saved: ${fmt(G.mB.accum)}
+      <div style="font-size:.72rem;color:var(--dim);margin-bottom:.3rem;text-align:center;">
+        Lost <span style="color:var(--red);font-weight:700;">${fmt(lostAmt)}</span> (50% penalty) · Saved: <strong style="color:var(--green);">${fmt(G.mB.accum)}</strong>
       </div>
       <button class="btn btn-green" style="width:100%;max-width:340px;padding:.7rem;font-size:.9rem;" onclick="collectModeB()">
-        NAPLATI ${fmt(G.mB.accum)}
+        COLLECT ${fmt(G.mB.accum)}
       </button>`;
   }
   if(isL5&&allSpinsUsed){
@@ -1891,18 +1894,18 @@ function buildModeBFooterHTML(){
         Level complete · Accumulated: <strong style="color:var(--green);">${fmt(G.mB.accum)}</strong>
       </div>
       <div class="ca-row">
-        <button class="btn-coll" onclick="collectModeB()">NAPLATI ${fmt(G.mB.accum)}</button>
+        <button class="btn-coll" onclick="collectModeB()">COLLECT ${fmt(G.mB.accum)}</button>
         <button class="btn-asc" onclick="ascendModeB()">ASCEND TO L${G.mB.level+1} ›</button>
       </div>`;
   }
-  const riskTxt=G.mB.level>1?` | Rizik per spin: <strong style="color:var(--red);">${perSpinRisk}%</strong>`:'';
+  const riskTxt=G.mB.level>1?` | Risk per spin: <strong style="color:var(--red);">${perSpinRisk}%</strong>`:'';
   return `
     <div style="font-size:.7rem;color:var(--dim);margin-bottom:.4rem;text-align:center;">
       Spin <strong style="color:var(--text);">${spinNum}/3</strong> | Level mult: <strong style="color:var(--blue);">×${lvl.mult}</strong>${riskTxt}
     </div>
     <div class="ca-row">
       <button class="btn btn-spin" id="mb-spin" onclick="spinModeB()" style="min-width:140px;">SPIN</button>
-      <button class="btn-outline" onclick="collectModeB()">NAPLATI ${fmt(G.mB.accum)}</button>
+      <button class="btn-outline" onclick="collectModeB()">COLLECT ${fmt(G.mB.accum)}</button>
     </div>`;
 }
 
@@ -1923,12 +1926,17 @@ async function spinModeB(){
 
   const lvl=BLEVELS[G.mB.level];
 
-  // FIX: Per-spin bust check at L2+ (risk distributed across 5 spins)
+  // FIX: Per-spin bust check at L2+ (risk distributed across 3 spins)
   if(G.mB.level>1){
     const perSpinRisk=lvl.risk/3;  // V2: 3 spins per level
     if(Math.random()*100<perSpinRisk){
-      // BUST during this spin!
+      // V2.3.11: BUST PENALTY — player loses 50% of accumulated wins.
+      // Old behavior: keep 100% accum on bust (created no real risk).
+      // New: bust = -50% accumulated. Creates genuine "collect or ascend" tension.
+      const lostAmount = G.mB.accum * 0.5;
+      G.mB.accum = G.mB.accum * 0.5;
       G.mB.busted=true;
+      G.mB.bustPenalty=lostAmount;  // Track for UI display
       // FIX: Keep current grid — just flash it red. No regen = no "reshuffle".
       const ge=gridEl();
       if(ge){
@@ -1971,12 +1979,12 @@ async function spinModeB(){
   }
   await delay(520);
   await delay(150);
-  // V2.3.10: stickyWilds passed by reference, mutated by runCascades when wilds win.
+  // V2.3.11: stickyWilds passed by reference, mutated by runCascades when wilds win.
   // Removed old "add all wilds" loop — only winning wilds become sticky.
   const w=await runCascades(lvl.mult, G.mB.stickyWilds);
   if(w>0)G.mB.accum+=w;
 
-  // V2.3.10 defensive: ensure promoted stickies stay rendered as W
+  // V2.3.11 defensive: ensure promoted stickies stay rendered as W
   let wildsRestored=false;
   G.mB.stickyWilds.forEach(p=>{
     if(p>=0&&p<30&&G.grid[p]!=='W'){G.grid[p]='W';wildsRestored=true;}
@@ -1985,7 +1993,7 @@ async function spinModeB(){
   // Only re-render if wilds were restored (otherwise grid is already final)
   if(wildsRestored)renderGrid(gridEl(),G.grid,null,null,null);
 
-  // V2.3.10 FIX: Mode B scatter feature — 4+ scatters = +1 free spin in current level
+  // V2.3.11 FIX: Mode B scatter feature — 4+ scatters = +1 free spin in current level
   // Parallel to Mode A's "scatter = +2s timer" mechanic. Gives Mode B scatter purpose.
   const scatCount=G.grid.filter(s=>s==='B').length;
   let scatterBonus=false;
@@ -2019,7 +2027,7 @@ async function spinModeB(){
 
 function collectModeB(){
   const win=G.mB.accum;G.balance+=win;
-  // V2.3.10 BUG FIX: clear stickyWilds to prevent leak into basic slot
+  // V2.3.11 BUG FIX: clear stickyWilds to prevent leak into basic slot
   G.mB.stickyWilds=[];
   // TRACKER: log Mode B end (collect or bust both go here)
   Tracker.logModeB({
@@ -2047,13 +2055,13 @@ async function ascendModeB(){
 function launchModeBNova(){
   const stake=G.mB.accum;
   if(stake<0.01){collectModeB();return;}
-  // V2.3.10 BUG FIX: clear Mode B stickyWilds before NR finale to prevent leak
+  // V2.3.11 BUG FIX: clear Mode B stickyWilds before NR finale to prevent leak
   G.mB.stickyWilds=[];
   G.novaStake=stake;G.novaMult=1.0;G.novaHist=[1.0];G.autoCashout=0;
   G.novaSource='mode_b_finale'; // TRACKER context
   const r=Math.random();
-  // V2.3.10: Mode B L5 NR Finale uses HIGHER cap (5000×) — "Mega NR" experience
-  // Total Mode B payout cap = 5000× bet (was 2000×). P(crash ≥ 5000×) = 0.0196% = 1 u 5100
+  // V2.3.11: Mode B L5 NR Finale uses HIGHER cap (5000×) — "Mega NR" experience
+  // Total Mode B payout cap = 5,000× bet (was 2,000×). P(crash ≥ 5,000×) = 0.0196% = 1 in 5,100
   // Stake-aware cap: ensures max payout doesn't exceed 5000× bet (e.g. stake 50× → cap 100×)
   const maxMult=Math.min(5000*G.bet/Math.max(stake,0.01),5000);
   G.novaBust=Math.min(Math.max(0.98/r,1.01),maxMult);
@@ -2075,7 +2083,7 @@ function showResult(amount,win,mult,src){
     ${src?`<div style="font-size:.7rem;color:var(--blue);letter-spacing:.1em;margin:.3rem 0;">${src}</div>`:''}
     <div style="font-size:.82rem;color:var(--dim);max-width:260px;margin:.6rem 0;">${win?'Winnings added to balance.':'Amount launched into NOVA RUSH lost.'}</div>
     <div style="display:flex;gap:.7rem;margin-top:1.2rem;">
-      <button class="btn btn-spin" onclick="continueFromResult()">NASTAVI DEMO</button>
+      <button class="btn btn-spin" onclick="continueFromResult()">CONTINUE DEMO</button>
       <button class="btn-outline" onclick="if(G.autoSpin.remaining>0)stopAutoSpin('manual');G.scatCnt=3;showModeSelect()">BONUS AGAIN</button>
     </div>
     ${isAutoSpinning?`<div id="auto-cont-msg" style="margin-top:.8rem;font-size:.72rem;color:var(--blue);letter-spacing:.05em;">⟳ Auto-nastavak za <span id="auto-cont-cnt">2</span>s · <span style="color:var(--gold);cursor:pointer;text-decoration:underline;" onclick="if(G.autoSpin.remaining>0)stopAutoSpin('manual');">STOP</span></div>`:''}
@@ -2098,7 +2106,7 @@ function showResult(amount,win,mult,src){
   }
 }
 
-// V2.3: Centralized NASTAVI DEMO handler — clears auto-continue timer + advances
+// V2.3: Centralized CONTINUE DEMO handler — clears auto-continue timer + advances
 function continueFromResult(){
   if(G._autoContTimer){clearInterval(G._autoContTimer);G._autoContTimer=null;}
   showGame();
@@ -2119,7 +2127,7 @@ function showIntro(){
       <div class="logo-nova">NOVA</div>
       <div class="logo-burst">BURST</div>
       <div style="color:var(--dim);letter-spacing:.15em;font-size:.85rem;margin:.7rem 0 1.2rem;">HYBRID CASCADE SLOT × CRASH GAMBLE</div>
-      <!-- V2.3.10: Production-realistic RTP — Slot ~97%, Crash 98% (MGA tier) -->
+      <!-- V2.3.11: Production-realistic RTP — Slot ~97%, Crash 98% (MGA tier) -->
       <div style="display:flex;gap:1.4rem;justify-content:center;margin:1.2rem 0;flex-wrap:wrap;">
         <div style="position:relative;">
           <div class="istat-val" style="color:#5cdb95;">96%</div>
@@ -2138,14 +2146,14 @@ function showIntro(){
         </div>
         <div><div class="istat-val">6×5</div><div class="istat-lbl">GRID</div></div>
       </div>
-      <!-- V2.3.10: Sequential Wagers info + new max win promo -->
+      <!-- V2.3.11: Sequential Wagers info + new max win promo -->
       <div style="max-width:480px;margin:0 auto 1.1rem;padding:.55rem .8rem;background:rgba(0,180,216,.06);border:1px solid rgba(0,180,216,.18);border-radius:7px;font-size:.62rem;color:var(--dim);line-height:1.55;letter-spacing:.02em;">
-        <span style="color:#5cdb95;font-weight:700;">SLOT</span> i <span style="color:#f4b942;font-weight:700;">CRASH</span> components have independent RTPs.
-        You can collect the slot win or risk it in Nova Rush <span style="color:#FF7B5C;font-weight:700;">(do 1,000×)</span>.
+        <span style="color:#5cdb95;font-weight:700;">SLOT</span> and <span style="color:#f4b942;font-weight:700;">CRASH</span> components have independent RTPs.
+        You can collect the slot win or risk it in Nova Rush <span style="color:#FF7B5C;font-weight:700;">(up to 1,000×)</span>.
         Mode B Level 5 finale goes up to <span style="color:#FF7B5C;font-weight:700;">5,000×</span>.
       </div>
-      <button class="btn btn-spin" style="font-size:1.05rem;padding:.85rem 2.8rem;" onclick="showGame()">POKRENITE DEMO</button>
-      <div style="margin-top:.9rem;font-size:.65rem;color:rgba(142,172,192,.4);letter-spacing:.1em;">INVESTOR DEMO v2.3.10 · POVERLJIVO</div>
+      <button class="btn btn-spin" style="font-size:1.05rem;padding:.85rem 2.8rem;" onclick="showGame()">START DEMO</button>
+      <div style="margin-top:.9rem;font-size:.65rem;color:rgba(142,172,192,.4);letter-spacing:.1em;">INVESTOR DEMO v2.3.11 · CONFIDENTIAL</div>
     </div>`;
   // Stars
   const bg=$('star-bg');if(!bg)return;
@@ -2200,7 +2208,7 @@ function showGame(preserveGrid){
   renderGrid(gridEl(),G.grid,null,null,null);
   // V2.3: Restore auto-spin UI if it's still active (e.g. after NR resolve)
   updateAutoSpinUI();
-  // Demo panel se sada otvara klikom na ⚙ gear (u controls), ne pokazuje se automatski
+  // Demo panel now opens on ⚙ gear click (in controls), no longer shows automatically
 }
 
 // ─── PRE-SET NOVA RUSH PREFERENCES (section 4.3) ─────────────────────────────
@@ -2224,34 +2232,34 @@ function showPrefs(){
       <div class="pref-hd">NOVA RUSH POPUP MOD</div>
       <div class="pref-sub">Choose behavior for wins above stake (pre-set preferences)</div>
       <div class="pref-opt" data-mode="COLLECT" onclick="setPrefMode('COLLECT')">
-        <div class="pref-opt-h">🔒 COLLECT — Uvek naplati</div>
+        <div class="pref-opt-h">🔒 COLLECT — Always collect</div>
         <div class="pref-opt-d">All wins auto-collected. Never prompts for Nova Rush. (conservative)</div>
       </div>
       <div class="pref-opt" data-mode="ASK" onclick="setPrefMode('ASK')">
-        <div class="pref-opt-h">❓ ASK — Pitaj svaki put <span style="color:var(--gold);font-size:.6rem;">DEFAULT</span></div>
+        <div class="pref-opt-h">❓ ASK — Prompt each time <span style="color:var(--gold);font-size:.6rem;">DEFAULT</span></div>
         <div class="pref-opt-d">Prompt with 8-second timer for every win above stake.</div>
       </div>
       <div class="pref-opt" data-mode="LAUNCH" onclick="setPrefMode('LAUNCH')">
-        <div class="pref-opt-h">🚀 LAUNCH — Uvek lansiraj</div>
+        <div class="pref-opt-h">🚀 LAUNCH — Always launch</div>
         <div class="pref-opt-d">Every qualifying win goes directly to Nova Rush. (crash-native players)</div>
       </div>
       <div class="pref-opt" data-mode="CUSTOM" onclick="setPrefMode('CUSTOM')">
-        <div class="pref-opt-h">🎯 CUSTOM — Lansiraj u opsegu</div>
-        <div class="pref-opt-d">Nova Rush samo za dobitke u opsegu
+        <div class="pref-opt-h">🎯 CUSTOM — Launch in range</div>
+        <div class="pref-opt-d">Nova Rush only for wins in range
           <input id="pref-min" type="number" min="1.1" max="100" step="0.5" value="${p.customMin.toFixed(1)}" onclick="event.stopPropagation()"/>×
-          do
+          to
           <input id="pref-max" type="number" min="1.5" max="2000" step="0.5" value="${p.customMax.toFixed(1)}" onclick="event.stopPropagation()"/>×.
-          Izvan opsega → naplata.</div>
+          Outside range → collect.</div>
       </div>
       <div class="pref-opt" data-mode="AUTO" onclick="setPrefMode('AUTO')">
-        <div class="pref-opt-h">⚡ AUTO — Lansiraj + auto-cashout</div>
-        <div class="pref-opt-d">Uvek lansiraj, automatski cashout na
+        <div class="pref-opt-h">⚡ AUTO — Launch + auto-cashout</div>
+        <div class="pref-opt-d">Always launch, automatic cashout at
           <input id="pref-auto" type="number" min="1.05" max="50" step="0.1" value="${p.autoCashoutMult.toFixed(1)}" onclick="event.stopPropagation()"/>×.
-          (LAUNCH + autoplay kombinacija)</div>
+          (LAUNCH + autoplay combination)</div>
       </div>
       <div class="pref-btns">
         <button class="btn-outline" onclick="closePrefs()" style="flex:1;">CANCEL</button>
-        <button class="btn btn-spin" onclick="savePrefs()" style="flex:1;font-size:.82rem;padding:.5rem 1rem;">POTVRDI</button>
+        <button class="btn btn-spin" onclick="savePrefs()" style="flex:1;font-size:.82rem;padding:.5rem 1rem;">CONFIRM</button>
       </div>
     </div>`;
   document.body.appendChild(ovl);
@@ -2298,7 +2306,7 @@ function resetDemo(){
   if(G._autoContTimer){clearInterval(G._autoContTimer);G._autoContTimer=null;}
   if(G.autoSpin.remaining>0)stopAutoSpin('reset');
   G.balance=1000;G.bet=1;G.spinning=false;
-  toggleDP(false); // zatvori panel ako je otvoren
+  toggleDP(false); // close panel if open
   showIntro();
 }
 
@@ -2312,7 +2320,7 @@ function toggleDP(force){
   else{expanded=dp.classList.toggle('expanded');}
   if(tgl){tgl.classList.toggle('is-active',expanded);}
 }
-// Auto-close panel posle klika na neku demo akciju
+// Auto-close panel after click on a demo action
 // (script is at the end of body, DOM already parsed)
 (function(){
   const dp=$('dp');
@@ -2325,10 +2333,10 @@ function toggleDP(force){
 })();
 
 // ─── PIN ACCESS CONTROL ──────────────────────────────────────────────────────
-// PIN code za pristup demo verziji. Promeniti pre deploy-a ako je potrebno.
+// PIN code for demo access. Change before deploy if needed.
 // Note: this is client-side protection to prevent accidental access,
-// nije pravi security mehanizam.
-const DEMO_PIN='2387'; // Godina iz lore-a "Godina 2387" — lako za pamtiti
+// not a real security mechanism.
+const DEMO_PIN='2387'; // Year from lore "Year 2387" — easy to remember
 const PIN_MAX_ATTEMPTS=5;
 const PIN_LOCKOUT_MS=30000;
 let pinAttempts=0;
